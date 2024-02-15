@@ -1,30 +1,39 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.repository.DAO.classes.TraineeDAO;
+import com.epam.epamgymdemo.model.Trainee;
+import com.epam.epamgymdemo.Dao.TraineeDao;
 import org.springframework.stereotype.Service;
+
+import javax.management.InstanceNotFoundException;
+import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class TraineeService {
 
-    private final TraineeDAO traineeDAO;
+    private final TraineeDao traineeDAO;
 
-    public TraineeService(TraineeDAO traineeDAO) {
+    public TraineeService(TraineeDao traineeDAO) {
         this.traineeDAO = traineeDAO;
     }
 
-    public void createTrainee() {
-        return;
+    public void createTrainee(Long traineeId, LocalDate doB, String address, Long userId) {
+        traineeDAO.create(new Trainee(traineeId, doB, address, userId));
     }
 
-    public void updateTrainee() {
-        return;
+    public void updateTrainee(Long traineeId, LocalDate doB, String address, Long userId) throws InstanceNotFoundException {
+        traineeDAO.update(new Trainee(traineeId, doB, address, userId));
     }
 
-    public void selectTrainee() {
-        return;
+    public Trainee selectTrainee(Long id) throws InstanceNotFoundException {
+        return traineeDAO.get(id);
     }
 
-    public void deleteTrainee() {
-        return;
+    public List<Trainee> selectAllTrainees() {
+        return traineeDAO.getAll();
+    }
+
+    public void deleteTrainee(Long id) throws InstanceNotFoundException {
+        traineeDAO.delete(id);
     }
 }

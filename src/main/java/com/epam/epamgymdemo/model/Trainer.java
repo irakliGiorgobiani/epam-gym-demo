@@ -1,19 +1,12 @@
 package com.epam.epamgymdemo.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
 public class Trainer {
-    private String specialization;
-    private String userId;
-
-    public Trainer(String specialization, String userId) {
-        this.specialization = specialization;
-        this.userId = userId;
-    }
-
-    public String getSpecialization() {
-        return specialization;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
+    private Long trainerId;
+    private TrainingType specialization;
+    private Long userId;
 }

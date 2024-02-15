@@ -1,38 +1,47 @@
 package com.epam.epamgymdemo.model;
 
+import lombok.Getter;
+import org.apache.commons.lang3.RandomStringUtils;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@Getter
 public class User {
+    private final Long userId;
+    private final String firstName;
+    private final String lastName;
+    private final String userName;
+    private final String password;
+    private final boolean isActive;
+    private static Map<String, Integer> usernameCount = new HashMap<>();
 
-    private String firstName;
-    private String lastName;
-    private String userName;
-    private String password;
-    private boolean isActive;
-
-    public User(String firstName, String lastName, String userName, String password, boolean isActive) {
+    public User(Long userId, String firstName, String lastName, boolean isActive) {
+        this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.userName = userName;
-        this.password = password;
         this.isActive = isActive;
+        this.userName = generateUsername(firstName, lastName);
+        this.password = generatePassword();
     }
 
-    public String getFirstName() {
-        return firstName;
+    private String generateUsername(String firstName, String lastName) {
+        String baseUsername = firstName + "." + lastName;
+        String resultName = "";
+
+        if (usernameCount.containsKey(baseUsername)) {
+            resultName = baseUsername + (usernameCount.get(baseUsername) + 1);
+            int newCount = usernameCount.get(baseUsername) + 1;
+            usernameCount.put(baseUsername, newCount);
+        } else {
+            usernameCount.putIfAbsent(baseUsername, 1);
+            resultName = baseUsername;
+        }
+
+        return resultName;
     }
 
-    public String getLastName() {
-        return lastName;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public boolean isActive() {
-        return isActive;
+    private String generatePassword() {
+        return RandomStringUtils.randomAlphanumeric(10);
     }
 }

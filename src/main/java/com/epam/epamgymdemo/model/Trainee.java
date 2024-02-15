@@ -1,27 +1,14 @@
 package com.epam.epamgymdemo.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 import java.time.LocalDate;
-
+@Getter
+@AllArgsConstructor
 public class Trainee {
-    private LocalDate DoB;
+    private Long traineeId;
+    private LocalDate doB;
     private String address;
-    private String userId;
-
-    public Trainee(LocalDate doB, String address, String userId) {
-        DoB = doB;
-        this.address = address;
-        this.userId = userId;
-    }
-
-    public LocalDate getDoB() {
-        return DoB;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
+    private Long userId;
 }

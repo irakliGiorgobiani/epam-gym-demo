@@ -1,4 +1,4 @@
-package com.epam.epamgymdemo.Dao;
+package com.epam.epamgymdemo.dao;
 
 import javax.management.InstanceNotFoundException;
 

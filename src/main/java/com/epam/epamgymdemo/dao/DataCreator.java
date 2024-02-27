@@ -1,4 +1,4 @@
-package com.epam.epamgymdemo.Dao;
+package com.epam.epamgymdemo.dao;
 
 public interface DataCreator<T> {
     void create(T t);

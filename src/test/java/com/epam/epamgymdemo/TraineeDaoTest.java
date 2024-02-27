@@ -1,6 +1,6 @@
 package com.epam.epamgymdemo;
 
-import com.epam.epamgymdemo.Dao.TraineeDao;
+import com.epam.epamgymdemo.dao.TraineeDao;
 import com.epam.epamgymdemo.model.Trainee;
 import com.epam.epamgymdemo.repository.TraineeRepository;
 import org.junit.jupiter.api.BeforeEach;

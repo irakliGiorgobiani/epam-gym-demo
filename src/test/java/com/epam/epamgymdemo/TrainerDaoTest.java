@@ -1,8 +1,9 @@
 package com.epam.epamgymdemo;
 
-import com.epam.epamgymdemo.Dao.TrainerDao;
+import com.epam.epamgymdemo.dao.TrainerDao;
 import com.epam.epamgymdemo.model.Trainer;
 import com.epam.epamgymdemo.model.TrainingType;
+import com.epam.epamgymdemo.model.User;
 import com.epam.epamgymdemo.repository.TrainerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.mockito.MockitoAnnotations;
 import javax.management.InstanceNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
@@ -31,8 +33,8 @@ public class TrainerDaoTest {
 
     @Test
     public void testGetTrainer() throws InstanceNotFoundException {
-        Trainer trainer = new Trainer(1L, TrainingType.YOGA, 1L);
-        when(trainerRepository.getTrainer(1L)).thenReturn(trainer);
+        Trainer trainer = new Trainer(1L,new TrainingType(1L, "yoga"), new User(1L, "Irakli", "Giorgobiani", "IrakliGiorgobiani", "password", true));
+        when(trainerRepository.findById(1L)).thenReturn(Optional.of(trainer));
 
         Trainer selectedTrainer = trainerDao.get(1L);
         assertEquals(trainer, selectedTrainer);

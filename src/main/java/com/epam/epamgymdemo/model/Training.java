@@ -1,17 +1,36 @@
 package com.epam.epamgymdemo.model;
 
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-@AllArgsConstructor
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity
+@Table(name = "training")
 public class Training {
+    @Id
+    @Column(name = "trainingId")
     private Long trainingId;
-    private Long traineeId;
-    private Long trainerId;
+    @Column(name = "trainingName")
     private String trainingName;
-    private TrainingType trainingType;
+    @Column(name = "trainingDate")
     private LocalDate trainingDate;
-    private Integer trainingDuration;
+    @Column(name = "trainingDuration")
+    private Number trainingDuration;
+
+    @ManyToOne
+    @JoinColumn(name = "traineeId", referencedColumnName = "traineeId")
+    private Trainee trainee;
+
+    @ManyToOne
+    @JoinColumn(name = "trainerId", referencedColumnName = "trainerId")
+    private Trainer trainer;
+
+    @ManyToOne
+    @JoinColumn(name = "typeId", referencedColumnName = "typeId")
+    private TrainingType trainingType;
 }

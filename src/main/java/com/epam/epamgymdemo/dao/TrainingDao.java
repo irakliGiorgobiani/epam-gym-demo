@@ -1,14 +1,16 @@
-package com.epam.epamgymdemo.Dao;
+package com.epam.epamgymdemo.dao;
 
-import com.epam.epamgymdemo.logger.LoggerUtil;
 import com.epam.epamgymdemo.model.Training;
 import com.epam.epamgymdemo.repository.TrainingRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 
 import javax.management.InstanceNotFoundException;
 import java.util.List;
 
 @Repository
+@Slf4j
 public class TrainingDao implements DataCreator<Training>, DataSelector<Training> {
 
     private final TrainingRepository trainingRepository;
@@ -19,19 +21,21 @@ public class TrainingDao implements DataCreator<Training>, DataSelector<Training
 
     @Override
     public Training get(Long id) throws InstanceNotFoundException {
-        if (trainingRepository.getTraining(id) == null) {
-            throw new InstanceNotFoundException("Training not found with the given id: " + id);
-        } else return trainingRepository.getTraining(id);
+        return trainingRepository.findById(id).orElseThrow(() -> new InstanceNotFoundException(String.format("Training not found with the id: %d", id)));
     }
 
     @Override
     public List<Training> getAll() {
-        return trainingRepository.getAllTrainings();
+        return trainingRepository.findAll();
     }
 
     @Override
     public void create(Training training) {
-        trainingRepository.addTraining(training);
-        LoggerUtil.getLogger().info("Training created successfully");
+        if (trainingRepository.existsById(training.getTrainingId())) {
+            throw new DuplicateKeyException("Training with this id already exists");
+        } else {
+            trainingRepository.save(training);
+            log.info("Training created successfully");
+        }
     }
 }

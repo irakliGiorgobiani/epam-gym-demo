@@ -1,20 +1,11 @@
 package com.epam.epamgymdemo.facade;
 
-import com.epam.epamgymdemo.Dao.TraineeDao;
-import com.epam.epamgymdemo.Dao.TrainerDao;
-import com.epam.epamgymdemo.Dao.TrainingDao;
 import com.epam.epamgymdemo.model.Trainee;
 import com.epam.epamgymdemo.model.Trainer;
 import com.epam.epamgymdemo.model.Training;
-import com.epam.epamgymdemo.model.TrainingType;
-import com.epam.epamgymdemo.repository.TraineeRepository;
-import com.epam.epamgymdemo.repository.TrainerRepository;
-import com.epam.epamgymdemo.repository.TrainingRepository;
 import com.epam.epamgymdemo.service.TraineeService;
 import com.epam.epamgymdemo.service.TrainerService;
 import com.epam.epamgymdemo.service.TrainingService;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Component;
 
 import javax.management.InstanceNotFoundException;
@@ -42,8 +33,9 @@ public class GymFacade {
         return traineeService.selectAllTrainees();
     }
 
-    public void createTrainee(Long traineeId, LocalDate doB, String address, Long userId) {
-        traineeService.createTrainee(traineeId, doB, address, userId);
+    public void createTrainee(Long traineeId, LocalDate doB, String address,
+                              Long userId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
+        traineeService.createTrainee(traineeId, doB, address, userId, firstName, lastName, isActive);
     }
 
     public void updateTrainee(Long traineeId, LocalDate doB, String address, Long userId) throws InstanceNotFoundException {
@@ -62,12 +54,13 @@ public class GymFacade {
         return trainerService.selectAllTrainers();
     }
 
-    public void createTrainer(Long trainerId, TrainingType specialization, Long userId) {
-        trainerService.createTrainer(trainerId, specialization, userId);
+    public void createTrainer(Long trainerId, Long typeId,
+                              Long userId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
+        trainerService.createTrainer(trainerId, typeId, userId, firstName, lastName, isActive);
     }
 
-    public void updateTrainer(Long trainerId, TrainingType specialization, Long userId) throws InstanceNotFoundException {
-        trainerService.updateTrainer(trainerId, specialization, userId);
+    public void updateTrainer(Long trainerId, Long typeId, Long userId) throws InstanceNotFoundException {
+        trainerService.updateTrainer(trainerId, typeId, userId);
     }
 
     public Training selectTraining(Long id) throws InstanceNotFoundException {
@@ -78,9 +71,8 @@ public class GymFacade {
         return trainingService.selectAllTrainings();
     }
 
-    public void createTraining(Long trainingId, Long traineeId, Long trainerId, String trainingName,
-                               TrainingType trainingType, LocalDate trainingDate, Integer trainingDuration) {
-        trainingService.createTraining(trainingId, traineeId, trainerId, trainingName,
-                trainingType, trainingDate, trainingDuration);
+    public void createTraining(Long trainingId, String trainingName, LocalDate trainingDate, Number trainingDuration,
+                               Long traineeId, Long trainerId, Long typeId) throws InstanceNotFoundException {
+        trainingService.createTraining(trainingId, trainingName, trainingDate, trainingDuration, traineeId, trainerId, typeId);
     }
 }

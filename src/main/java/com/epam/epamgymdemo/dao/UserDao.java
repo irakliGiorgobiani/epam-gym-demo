@@ -5,6 +5,7 @@ import com.epam.epamgymdemo.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.management.InstanceNotFoundException;
 import java.util.List;
@@ -19,9 +20,10 @@ public class UserDao implements DataCreator<User>, DataSelector<User> {
     }
 
     @Override
+    @Transactional
     public void create(User user) {
-        if (userRepository.existsById(user.getUserId())) {
-            throw new DuplicateKeyException("User with this id already exists");
+        if (userRepository.existsById(user.getId())) {
+            throw new DuplicateKeyException(String.format("User with the id: %d already exists", user.getId()));
         } else {
             userRepository.save(user);
             log.info("User successfully created");
@@ -36,5 +38,29 @@ public class UserDao implements DataCreator<User>, DataSelector<User> {
     @Override
     public List<User> getAll() {
         return userRepository.findAll();
+    }
+
+    public User getByUsername(String username) throws InstanceNotFoundException {
+        if (!userRepository.existsByUserName(username)) {
+            throw new InstanceNotFoundException(String.format("User not found with the username: %s", username));
+        } else return userRepository.findByUserName(username);
+    }
+
+    @Transactional
+    public void updatePassword(Long id, String password) throws InstanceNotFoundException {
+        User user = this.get(id);
+
+        user.setPassword(password);
+
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void updateIsActive(Long id, Boolean isActive) throws InstanceNotFoundException {
+        User user = this.get(id);
+
+        user.setIsActive(isActive);
+
+        userRepository.save(user);
     }
 }

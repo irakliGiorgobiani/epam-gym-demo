@@ -3,9 +3,10 @@ package com.epam.epamgymdemo.generator;
 import com.epam.epamgymdemo.dao.UserDao;
 import com.epam.epamgymdemo.model.User;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
-
+@Component
 public class UsernamePasswordGenerator {
 
     private final UserDao userDao;

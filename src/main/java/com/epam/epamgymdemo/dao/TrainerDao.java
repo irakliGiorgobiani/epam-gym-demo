@@ -5,6 +5,7 @@ import com.epam.epamgymdemo.repository.TrainerRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.management.InstanceNotFoundException;
 import java.util.List;
@@ -30,22 +31,22 @@ public class TrainerDao implements DataCreator<Trainer>, DataSelector<Trainer>, 
     }
 
     @Override
+    @Transactional
     public void create(Trainer trainer) {
-        if (trainerRepository.existsById(trainer.getTrainerId())) {
-            throw new DuplicateKeyException("Trainer with this id already exists");
+        if (trainerRepository.existsById(trainer.getId())) {
+            throw new DuplicateKeyException(String.format("Trainer with the id: %d already exists", trainer.getId()));
         } else {
             trainerRepository.save(trainer);
-            log.info("Trainer successfully created");
         }
     }
 
     @Override
+    @Transactional
     public void update(Trainer trainer) throws InstanceNotFoundException {
-        if (!trainerRepository.existsById(trainer.getTrainerId())) {
-            throw new InstanceNotFoundException(String.format("Trainer not found with the id: %d", trainer.getTrainerId()));
+        if (!trainerRepository.existsById(trainer.getId())) {
+            throw new InstanceNotFoundException(String.format("Trainer not found with the id: %d", trainer.getId()));
         } else {
             trainerRepository.save(trainer);
-            log.info("Trainer successfully updated");
         }
     }
 }

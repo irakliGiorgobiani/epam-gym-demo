@@ -1,6 +1,8 @@
 package com.epam.epamgymdemo.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -8,14 +10,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "trainingType")
+@Table(name = "training_type")
 public class TrainingType {
     @Id
-    @Column(name = "typeId")
-    private Long typeId;
-    @Column(name = "typeName")
+    @Column(name = "id")
+    private Long id;
+    @Column(name = "type_name", nullable = false)
     private String typeName;
 
     @OneToMany(mappedBy = "trainingType")
@@ -23,9 +27,4 @@ public class TrainingType {
 
     @OneToMany(mappedBy = "trainingType")
     private final List<Training> trainings = new ArrayList<>();
-
-    public TrainingType(Long typeId, String typeName) {
-        this.typeId = typeId;
-        this.typeName = typeName;
-    }
 }

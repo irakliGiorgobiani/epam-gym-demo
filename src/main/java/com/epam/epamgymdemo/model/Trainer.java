@@ -1,31 +1,34 @@
 package com.epam.epamgymdemo.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "trainer")
 public class Trainer {
     @Id
-    private Long trainerId;
+    @Column(name = "id")
+    private Long id;
     @ManyToOne
-    @JoinColumn(name = "specialization", referencedColumnName = "typeId")
+    @JoinColumn(name = "specialization", referencedColumnName = "id", nullable = false)
     private TrainingType trainingType;
     @OneToOne
-    @JoinColumn(name = "userId", referencedColumnName = "userId")
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
     @OneToMany(mappedBy = "trainer")
     private final List<Training> trainings = new ArrayList<>();
-
-    public Trainer(Long trainerId, TrainingType trainingType, User user) {
-        this.trainerId = trainerId;
-        this.trainingType = trainingType;
-        this.user = user;
-    }
+    @ManyToMany(mappedBy = "trainers")
+    private Set<Trainee> trainees = new HashSet<>();
 }

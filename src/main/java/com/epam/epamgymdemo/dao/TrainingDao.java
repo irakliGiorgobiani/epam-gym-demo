@@ -5,6 +5,7 @@ import com.epam.epamgymdemo.repository.TrainingRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.management.InstanceNotFoundException;
 import java.util.List;
@@ -30,8 +31,9 @@ public class TrainingDao implements DataCreator<Training>, DataSelector<Training
     }
 
     @Override
+    @Transactional
     public void create(Training training) {
-        if (trainingRepository.existsById(training.getTrainingId())) {
+        if (trainingRepository.existsById(training.getId())) {
             throw new DuplicateKeyException("Training with this id already exists");
         } else {
             trainingRepository.save(training);

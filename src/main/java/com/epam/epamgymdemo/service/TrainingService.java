@@ -8,6 +8,7 @@ import com.epam.epamgymdemo.model.Trainee;
 import com.epam.epamgymdemo.model.Trainer;
 import com.epam.epamgymdemo.model.Training;
 import com.epam.epamgymdemo.model.TrainingType;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.management.InstanceNotFoundException;
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
+@Slf4j
 public class TrainingService {
 
     private final TrainingDao trainingDao;
@@ -35,9 +37,20 @@ public class TrainingService {
         Trainer trainer = trainerDao.get(trainerId);
         TrainingType trainingType = trainingTypeDao.get(typeId);
 
-        Training training = new Training(trainingId, trainingName, trainingDate, trainingDuration, trainee, trainer, trainingType);
-
+        Training training = Training.builder()
+                .id(trainingId)
+                .trainingName(trainingName)
+                .trainingDate(trainingDate)
+                .trainingDuration(trainingDuration)
+                .trainee(trainee)
+                .trainer(trainer)
+                .trainingType(trainingType)
+                .build();
         trainingDao.create(training);
+
+        log.info(String.format("Training with the id: %d successfully created", trainingId));
+
+        trainee.getTrainers().add(trainer);
     }
 
     public Training selectTraining(Long id) throws InstanceNotFoundException {

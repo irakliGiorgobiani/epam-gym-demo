@@ -2,13 +2,14 @@ package com.epam.epamgymdemo;
 
 import com.epam.epamgymdemo.dao.TrainerDao;
 import com.epam.epamgymdemo.model.Trainer;
-import com.epam.epamgymdemo.model.TrainingType;
-import com.epam.epamgymdemo.model.User;
 import com.epam.epamgymdemo.repository.TrainerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 
 import javax.management.InstanceNotFoundException;
 import java.util.ArrayList;
@@ -16,55 +17,83 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 public class TrainerDaoTest {
-
-    private TrainerDao trainerDao;
 
     @Mock
     private TrainerRepository trainerRepository;
 
+    @InjectMocks
+    private TrainerDao trainerDao;
+
+    private Trainer trainer;
+
     @BeforeEach
-    public void setup() {
-        MockitoAnnotations.openMocks(this);
-        trainerDao = new TrainerDao(trainerRepository);
+    public void setUp() {
+        trainer = Trainer.builder()
+                .id(1L)
+                .build();
     }
 
     @Test
-    public void testGetTrainer() throws InstanceNotFoundException {
-        Trainer trainer = new Trainer(1L,new TrainingType(1L, "yoga"), new User(1L, "Irakli", "Giorgobiani", "IrakliGiorgobiani", "password", true));
+    public void testGetTrainerById() throws InstanceNotFoundException {
         when(trainerRepository.findById(1L)).thenReturn(Optional.of(trainer));
 
-        Trainer selectedTrainer = trainerDao.get(1L);
-        assertEquals(trainer, selectedTrainer);
+        Trainer result = trainerDao.get(1L);
+
+        assertEquals(trainer, result);
+    }
+
+    @Test
+    public void testGetTrainerByIdNotFound() {
+        when(trainerRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(InstanceNotFoundException.class, () -> trainerDao.get(1L));
     }
 
     @Test
     public void testGetAllTrainers() {
-        List<Trainer> trainers = new ArrayList<>();
-        trainers.add(new Trainer(1L, TrainingType.YOGA, 1L));
-        trainers.add(new Trainer(2L, TrainingType.ZUMBA, 2L));
-        when(trainerRepository.getAllTrainers()).thenReturn(trainers);
+        List<Trainer> trainerList = new ArrayList<>();
+        trainerList.add(trainer);
+        when(trainerRepository.findAll()).thenReturn(trainerList);
 
-        List<Trainer> selectedTrainers = trainerDao.getAll();
-        assertEquals(trainers, selectedTrainers);
+        List<Trainer> result = trainerDao.getAll();
+
+        assertEquals(trainerList, result);
     }
 
     @Test
     public void testCreateTrainer() {
-        Trainer trainer = new Trainer(1L, TrainingType.YOGA, 1L);
+        when(trainerRepository.existsById(1L)).thenReturn(false);
+
         trainerDao.create(trainer);
-        verify(trainerRepository, times(1)).addTrainer(trainer);
+
+        verify(trainerRepository, times(1)).save(trainer);
+    }
+
+    @Test
+    public void testCreateTrainerAlreadyExists() {
+        when(trainerRepository.existsById(1L)).thenReturn(true);
+
+        assertThrows(DuplicateKeyException.class, () -> trainerDao.create(trainer));
     }
 
     @Test
     public void testUpdateTrainer() throws InstanceNotFoundException {
-        Trainer trainer = new Trainer(1L, TrainingType.YOGA, 1L);
-        when(trainerRepository.containsTrainer(trainer.getTrainerId())).thenReturn(true);
+        when(trainerRepository.existsById(1L)).thenReturn(true);
 
         trainerDao.update(trainer);
-        verify(trainerRepository, times(1)).updateTrainer(trainer);
+
+        verify(trainerRepository, times(1)).save(trainer);
+    }
+
+    @Test
+    public void testUpdateTrainerNotFound() {
+        when(trainerRepository.existsById(1L)).thenReturn(false);
+
+        assertThrows(InstanceNotFoundException.class, () -> trainerDao.update(trainer));
     }
 }
-

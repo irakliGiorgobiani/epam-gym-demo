@@ -5,6 +5,7 @@ import com.epam.epamgymdemo.repository.TraineeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.management.InstanceNotFoundException;
 import java.util.List;
@@ -30,32 +31,32 @@ public class TraineeDao implements DataCreator<Trainee>, DataSelector<Trainee>, 
     }
 
     @Override
+    @Transactional
     public void create(Trainee trainee) {
-        if (traineeRepository.existsById(trainee.getTraineeId())) {
-            throw new DuplicateKeyException("Trainee with this id already exists");
+        if (traineeRepository.existsById(trainee.getId())) {
+            throw new DuplicateKeyException(String.format("Trainee with the id: %d already exists", trainee.getId()));
         } else {
             traineeRepository.save(trainee);
-            log.info("Trainee successfully created");
         }
     }
 
     @Override
+    @Transactional
     public void update(Trainee trainee) throws InstanceNotFoundException {
-        if (!traineeRepository.existsById(trainee.getTraineeId())) {
-            throw new InstanceNotFoundException(String.format("Trainee not found with id: %d", trainee.getTraineeId()));
+        if (!traineeRepository.existsById(trainee.getId())) {
+            throw new InstanceNotFoundException(String.format("Trainee not found with id: %d", trainee.getId()));
         } else {
             traineeRepository.save(trainee);
-            log.info("Trainee successfully updated");
         }
     }
 
     @Override
+    @Transactional
     public void delete(Long id) throws InstanceNotFoundException {
         if (!traineeRepository.existsById(id)) {
             throw new InstanceNotFoundException(String.format("Trainee not found with the id: %d", id));
         } else {
             traineeRepository.deleteById(id);
-            log.info("Trainee successfully deleted");
         }
     }
 }

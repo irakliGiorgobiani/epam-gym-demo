@@ -64,13 +64,15 @@ public class TrainerService {
     }
 
     public void updateTrainer(Long id, Long typeId, Long userId) throws InstanceNotFoundException {
-        TrainingType specialization = trainingTypeDao.get(typeId);
+        Trainer trainer = trainerDao.get(id);
 
-        Trainer trainer = Trainer.builder()
-                .id(id)
-                .trainingType(specialization)
-                .user(userDao.get(userId))
-                .build();
+        if (typeId != null) {
+            trainer.setTrainingType(trainingTypeDao.get(typeId));
+        }
+        if (userId != null) {
+            trainer.setUser(userDao.get(userId));
+        }
+
         trainerDao.update(trainer);
 
         log.info(String.format("Trainer with the id: %d successfully updated", id));
@@ -115,10 +117,10 @@ public class TrainerService {
         Stream<Training> trainingStream = trainingDao.getAll().stream().filter(t -> t.getTrainer().equals(trainer));
 
         if (fromDate != null) {
-            trainingStream = trainingStream.filter(t -> t.getTrainingDate().isEqual(fromDate) && t.getTrainingDate().isAfter(fromDate));
+            trainingStream = trainingStream.filter(t -> t.getTrainingDate().isEqual(fromDate) || t.getTrainingDate().isAfter(fromDate));
         }
         if (toDate != null) {
-            trainingStream = trainingStream.filter(t -> t.getTrainingDate().isEqual(toDate) && t.getTrainingDate().isBefore(toDate));
+            trainingStream = trainingStream.filter(t -> t.getTrainingDate().isEqual(toDate) || t.getTrainingDate().isBefore(toDate));
         }
         if (traineeName != null) {
             trainingStream = trainingStream.filter(t -> t.getTrainee().getUser().getFirstName().equals(traineeName));

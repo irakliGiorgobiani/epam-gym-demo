@@ -26,6 +26,18 @@ public class GymFacade {
         this.trainingService = trainingService;
     }
 
+    public void authorize(String username, String password) throws InstanceNotFoundException {
+        var trainer = trainerService.getByUsername(username);
+        var trainee = traineeService.getByUsername(username);
+
+        if ((trainee == null && trainer == null) ||
+                (trainee != null && !trainee.getUser().getPassword().equals(password)) ||
+                (trainer != null && !trainer.getUser().getPassword().equals(password))) {
+            throw new InstanceNotFoundException("Invalid username or password");
+        }
+    }
+
+
     public Trainee selectTrainee(Long id, String username, String password) throws InstanceNotFoundException {
         authorize(username, password);
         return traineeService.selectTrainee(id);
@@ -146,14 +158,5 @@ public class GymFacade {
     public void createTraining(Long trainingId, String trainingName, LocalDate trainingDate, Number trainingDuration,
                                Long traineeId, Long trainerId, Long typeId) throws InstanceNotFoundException {
         trainingService.createTraining(trainingId, trainingName, trainingDate, trainingDuration, traineeId, trainerId, typeId);
-    }
-
-    public void authorize(String username, String password) throws InstanceNotFoundException {
-        var trainer = trainerService.getByUsername(username);
-        var trainee = traineeService.getByUsername(username);
-
-        if ((trainee == null || !trainee.getUser().getPassword().equals(password)) || (trainer == null || !trainer.getUser().getPassword().equals(password))) {
-            throw new InstanceNotFoundException("Invalid username or password");
-        }
     }
 }

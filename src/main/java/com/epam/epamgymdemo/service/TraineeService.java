@@ -7,6 +7,7 @@ import com.epam.epamgymdemo.generator.UsernamePasswordGenerator;
 import com.epam.epamgymdemo.model.*;
 import com.epam.epamgymdemo.dao.TraineeDao;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import javax.management.InstanceNotFoundException;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 @Service
@@ -35,13 +37,11 @@ public class TraineeService {
         this.usernamePasswordGenerator = usernamePasswordGenerator;
     }
 
-    public void createTrainee(Long traineeId, LocalDate dateOfBirth, String address,
-                              Long userId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
+    static User userCreation(String firstName, String lastName, Boolean isActive, UsernamePasswordGenerator usernamePasswordGenerator, UserDao userDao, Logger log) {
         String username = usernamePasswordGenerator.generateUsername(firstName, lastName);
         String password = usernamePasswordGenerator.generatePassword();
 
         User user = User.builder()
-                .id(userId)
                 .firstName(firstName)
                 .lastName(lastName)
                 .userName(username)
@@ -50,18 +50,26 @@ public class TraineeService {
                 .build();
         userDao.create(user);
 
-        log.info(String.format("User with the id: %d successfully created", userId));
+        log.info(String.format("User with the id: %d successfully created", user.getId()));
+
+        return user;
+    }
+
+    public Trainee createTrainee(LocalDate dateOfBirth, String address,
+                              String firstName, String lastName, Boolean isActive) {
+        User user = userCreation(firstName, lastName, isActive, usernamePasswordGenerator, userDao, log);
 
         Trainee trainee = Trainee.builder()
-                .id(traineeId)
                 .dateOfBirth(dateOfBirth)
                 .address(address)
-                .user(userDao.get(userId))
+                .user(user)
                 .trainers(new HashSet<>())
                 .build();
         traineeDao.create(trainee);
 
-        log.info(String.format("Trainee with the id: %d successfully created", traineeId));
+        log.info(String.format("Trainee with the id: %d successfully created", trainee.getId()));
+
+        return trainee;
     }
 
     public void updateTrainee(Long id, LocalDate dateOfBirth, String address, Long userId) throws InstanceNotFoundException {
@@ -90,6 +98,8 @@ public class TraineeService {
     }
 
     public void deleteTrainee(Long id) throws InstanceNotFoundException {
+        Trainee trainee = traineeDao.get(id);
+        userDao.delete(trainee.getUser().getId());
         traineeDao.delete(id);
         log.info(String.format("Trainee with the id: %d successfully deleted", id));
     }
@@ -153,10 +163,17 @@ public class TraineeService {
         return trainerDao.getAll().stream().filter(t -> !trainee.getTrainers().contains(t)).toList();
     }
 
+    public Set<Trainer> getTraineeTrainersList(Long id) throws InstanceNotFoundException {
+        Trainee trainee = traineeDao.get(id);
+
+        return trainee.getTrainers();
+    }
+
     public void addTrainerToTraineesTrainersList(Long id, Trainer trainer) throws InstanceNotFoundException {
         Trainee trainee = traineeDao.get(id);
 
         trainee.getTrainers().add(trainer);
+        trainer.getTrainees().add(trainee);
         log.info(String.format("Trainer with the id: %d has been added to the trainers list of trainee with the id: %d", trainer.getId(), id));
     }
 
@@ -164,6 +181,31 @@ public class TraineeService {
         Trainee trainee = traineeDao.get(id);
 
         trainee.getTrainers().remove(trainer);
+        trainer.getTrainees().remove(trainee);
         log.info(String.format("Trainer with the id: %d has been removed from the trainers list of trainee with the id: %d", trainer.getId(), id));
+    }
+
+    public void changeUsername(Long traineeId, String username) throws InstanceNotFoundException {
+        var trainee = traineeDao.get(traineeId);
+
+        userDao.updateUsername(trainee.getUser().getId(), username);
+
+        log.info(String.format("Username for the trainee with the id: %d successfully changed", traineeId));
+    }
+
+    public void changeFirstName(Long traineeId, String firstName) throws InstanceNotFoundException {
+        var trainee = traineeDao.get(traineeId);
+
+        userDao.updateFirstName(trainee.getUser().getId(), firstName);
+
+        log.info(String.format("First name for the trainee with the id: %d successfully changed", traineeId));
+    }
+
+    public void changeLastName(Long traineeId, String lastName) throws InstanceNotFoundException {
+        var trainee = traineeDao.get(traineeId);
+
+        userDao.updateLastName(trainee.getUser().getId(), lastName);
+
+        log.info(String.format("Last name for the trainee with the id: %d successfully changed", traineeId));
     }
 }

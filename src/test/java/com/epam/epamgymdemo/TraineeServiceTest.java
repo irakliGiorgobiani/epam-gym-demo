@@ -18,7 +18,6 @@ import javax.management.InstanceNotFoundException;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
@@ -99,7 +98,7 @@ class TraineeServiceTest {
         when(userDao.get(userId)).thenReturn(user);
         when(traineeDao.get(traineeId)).thenReturn(trainee);
 
-        traineeService.createTrainee(traineeId, dateOfBirth, address, userId, firstName, lastName, isActive);
+        traineeService.createTrainee(dateOfBirth, address, firstName, lastName, isActive);
 
         assertEquals(userDao.get(userId), traineeDao.get(traineeId).getUser());
         assertEquals(traineeId, traineeDao.get(traineeId).getId());

@@ -12,7 +12,8 @@ import lombok.*;
 @Table(name = "user")
 public class User {
     @Id
-    @Column(name = "id", nullable = false)
+    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(name = "first_name", nullable = false)
     private String firstName;

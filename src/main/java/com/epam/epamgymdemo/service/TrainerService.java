@@ -34,33 +34,20 @@ public class TrainerService {
         this.usernamePasswordGenerator = usernamePasswordGenerator;
     }
 
-    public void createTrainer(Long trainerId, Long typeId,
-                              Long userId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
-        String username = usernamePasswordGenerator.generateUsername(firstName, lastName);
-        String password = usernamePasswordGenerator.generatePassword();
-
-        User user = User.builder()
-                .id(userId)
-                .firstName(firstName)
-                .lastName(lastName)
-                .userName(username)
-                .password(password)
-                .isActive(isActive)
-                .build();
-        userDao.create(user);
-
-        log.info(String.format("User with the id: %d successfully created", userId));
+    public Trainer createTrainer(Long typeId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
+        User user = TraineeService.userCreation(firstName, lastName, isActive, usernamePasswordGenerator, userDao, log);
 
         TrainingType specialization = trainingTypeDao.get(typeId);
 
         Trainer trainer = Trainer.builder()
-                .id(trainerId)
                 .trainingType(specialization)
-                .user(userDao.get(userId))
+                .user(user)
                 .build();
         trainerDao.create(trainer);
 
-        log.info(String.format("Trainer with the id: %d successfully created", trainerId));
+        log.info(String.format("Trainer with the id: %d successfully created", trainer.getId()));
+
+        return trainer;
     }
 
     public void updateTrainer(Long id, Long typeId, Long userId) throws InstanceNotFoundException {
@@ -86,16 +73,16 @@ public class TrainerService {
         return trainerDao.getAll();
     }
 
-    public void changePassword(Long trainerId, String password) throws InstanceNotFoundException {
-        var trainer = trainerDao.get(trainerId);
+    public void changePassword(Long id, String password) throws InstanceNotFoundException {
+        var trainer = trainerDao.get(id);
         userDao.updatePassword(trainer.getUser().getId(), password);
-        log.info(String.format("Password for the trainer with the id: %d successfully changed", trainerId));
+        log.info(String.format("Password for the trainer with the id: %d successfully changed", id));
     }
 
-    public void changeIsActive(Long trainerId, Boolean isActive) throws InstanceNotFoundException {
-        var trainer = trainerDao.get(trainerId);
+    public void changeIsActive(Long id, Boolean isActive) throws InstanceNotFoundException {
+        var trainer = trainerDao.get(id);
         userDao.updateIsActive(trainer.getUser().getId(), isActive);
-        log.info(String.format("Activity for the trainer with the id: %d successfully changed", trainerId));
+        log.info(String.format("Activity for the trainer with the id: %d successfully changed", id));
     }
 
     public Trainer getByUsername(String username) throws InstanceNotFoundException {
@@ -127,5 +114,29 @@ public class TrainerService {
         }
 
         return trainingStream.toList();
+    }
+
+    public void changeUsername(Long id, String username) throws InstanceNotFoundException {
+        var trainer = trainerDao.get(id);
+
+        userDao.updateUsername(trainer.getUser().getId(), username);
+
+        log.info(String.format("Username for the trainer with the id: %d successfully changed", id));
+    }
+
+    public void changeFirstName(Long id, String firstName) throws InstanceNotFoundException {
+        var trainer = trainerDao.get(id);
+
+        userDao.updateFirstName(trainer.getUser().getId(), firstName);
+
+        log.info(String.format("First name for the trainee with the id: %d successfully changed", id));
+    }
+
+    public void changeLastName(Long id, String lastName) throws InstanceNotFoundException {
+        var trainer = trainerDao.get(id);
+
+        userDao.updateLastName(trainer.getUser().getId(), lastName);
+
+        log.info(String.format("Last name for the trainee with the id: %d successfully changed", id));
     }
 }

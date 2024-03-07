@@ -4,10 +4,7 @@ import com.epam.epamgymdemo.dao.TraineeDao;
 import com.epam.epamgymdemo.dao.TrainerDao;
 import com.epam.epamgymdemo.dao.TrainingDao;
 import com.epam.epamgymdemo.dao.TrainingTypeDao;
-import com.epam.epamgymdemo.model.Trainee;
-import com.epam.epamgymdemo.model.Trainer;
-import com.epam.epamgymdemo.model.Training;
-import com.epam.epamgymdemo.model.TrainingType;
+import com.epam.epamgymdemo.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -59,5 +56,10 @@ public class TrainingService {
 
     public List<Training> selectAllTrainings() {
         return trainingDao.getAll();
+    }
+
+    public TrainingType getTrainingTypeByName(String trainingType) throws InstanceNotFoundException {
+        return trainingTypeDao.getAll().stream().filter(t -> t.getTypeName().equals(trainingType)).findFirst().orElseThrow(() ->
+                new InstanceNotFoundException("Training type name is incorrect"));
     }
 }

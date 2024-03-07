@@ -1,17 +1,16 @@
 package com.epam.epamgymdemo.facade;
 
-import com.epam.epamgymdemo.model.Trainee;
-import com.epam.epamgymdemo.model.Trainer;
-import com.epam.epamgymdemo.model.Training;
-import com.epam.epamgymdemo.model.TrainingType;
+import com.epam.epamgymdemo.model.*;
 import com.epam.epamgymdemo.service.TraineeService;
 import com.epam.epamgymdemo.service.TrainerService;
 import com.epam.epamgymdemo.service.TrainingService;
+import com.epam.epamgymdemo.service.UserService;
 import org.springframework.stereotype.Component;
 
 import javax.management.InstanceNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class GymFacade {
@@ -19,22 +18,29 @@ public class GymFacade {
     private final TraineeService traineeService;
     private final TrainerService trainerService;
     private final TrainingService trainingService;
+    private final UserService userService;
 
-    public GymFacade(TraineeService traineeService, TrainerService trainerService, TrainingService trainingService) {
+    public GymFacade(TraineeService traineeService, TrainerService trainerService, TrainingService trainingService, UserService userService) {
         this.traineeService = traineeService;
         this.trainerService = trainerService;
         this.trainingService = trainingService;
+        this.userService = userService;
     }
 
     public void authorize(String username, String password) throws InstanceNotFoundException {
-        var trainer = trainerService.getByUsername(username);
-        var trainee = traineeService.getByUsername(username);
+        var user = userService.getByUsername(username);
 
-        if ((trainee == null && trainer == null) ||
-                (trainee != null && !trainee.getUser().getPassword().equals(password)) ||
-                (trainer != null && !trainer.getUser().getPassword().equals(password))) {
+        if (user == null || !user.getPassword().equals(password)) {
             throw new InstanceNotFoundException("Invalid username or password");
         }
+    }
+
+    public void changePassword(String username, String oldPassword, String newPassword) throws InstanceNotFoundException {
+        authorize(username, oldPassword);
+
+        User user = userService.getByUsername(username);
+
+        userService.updatePassword(user.getId(), newPassword);
     }
 
 
@@ -53,14 +59,14 @@ public class GymFacade {
         return traineeService.getByUsername(username);
     }
 
-    public void createTrainee(Long traineeId, LocalDate doB, String address,
-                              Long userId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
-        traineeService.createTrainee(traineeId, doB, address, userId, firstName, lastName, isActive);
+    public Trainee createTrainee(LocalDate dateOfBirth, String address,
+                              String firstName, String lastName, Boolean isActive) {
+        return traineeService.createTrainee(dateOfBirth, address, firstName, lastName, isActive);
     }
 
-    public void updateTrainee(Long traineeId, LocalDate doB, String address, Long userId, String username, String password) throws InstanceNotFoundException {
+    public void updateTrainee(Long traineeId, LocalDate dateOfBirth, String address, Long userId, String username, String password) throws InstanceNotFoundException {
         authorize(username, password);
-        traineeService.updateTrainee(traineeId, doB, address, userId);
+        traineeService.updateTrainee(traineeId, dateOfBirth, address, userId);
     }
 
     public void deleteTraineeById(Long id, String username, String password) throws InstanceNotFoundException {
@@ -73,14 +79,29 @@ public class GymFacade {
         traineeService.deleteByUsername(username);
     }
 
-    public void changeTraineesPassword(Long traineeId, String password, String username, String passwordAuth) throws InstanceNotFoundException {
+    public void changeTraineesPassword(Long id, String password, String username, String passwordAuth) throws InstanceNotFoundException {
         authorize(username, passwordAuth);
-        traineeService.changePassword(traineeId, password);
+        traineeService.changePassword(id, password);
     }
 
-    public void changeTraineesIsActive(Long traineeId, Boolean isActive, String username, String password) throws InstanceNotFoundException {
+    public void changeTraineesUsername(Long id, String newUsername, String oldUsername, String password) throws InstanceNotFoundException {
+        authorize(oldUsername, password);
+        traineeService.changeUsername(id, newUsername);
+    }
+
+    public void changeTraineesFirstName(Long id, String firstName, String username, String password) throws InstanceNotFoundException {
         authorize(username, password);
-        traineeService.changeIsActive(traineeId, isActive);
+        traineeService.changeFirstName(id, firstName);
+    }
+
+    public void changeTraineesLastName(Long id, String lastName, String username, String password) throws InstanceNotFoundException {
+        authorize(username, password);
+        traineeService.changeLastName(id, lastName);
+    }
+
+    public void changeTraineesIsActive(Long id, Boolean isActive, String username, String password) throws InstanceNotFoundException {
+        authorize(username, password);
+        traineeService.changeIsActive(id, isActive);
     }
 
     public List<Training> selectTraineeTrainingsByUsernameAndCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate,
@@ -92,6 +113,11 @@ public class GymFacade {
     public List<Trainer> selectTrainersUnassignedToTrainee(String username, String usernameAuth, String password) throws InstanceNotFoundException {
         authorize(usernameAuth, password);
         return traineeService.getTrainersUnassignedToTrainee(username);
+    }
+
+    public Set<Trainer> selectTraineesTrainerList(Long id, String username, String password) throws InstanceNotFoundException {
+        authorize(username, password);
+        return traineeService.getTraineeTrainersList(id);
     }
 
     public void addTrainerToTrainersList(Long id, Trainer trainer, String username, String password) throws InstanceNotFoundException {
@@ -119,9 +145,8 @@ public class GymFacade {
         return trainerService.getByUsername(username);
     }
 
-    public void createTrainer(Long trainerId, Long typeId,
-                              Long userId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
-        trainerService.createTrainer(trainerId, typeId, userId, firstName, lastName, isActive);
+    public Trainer createTrainer(Long typeId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
+        return trainerService.createTrainer(typeId, firstName, lastName, isActive);
     }
 
     public void updateTrainer(Long trainerId, Long typeId, Long userId, String username, String password) throws InstanceNotFoundException {
@@ -132,6 +157,21 @@ public class GymFacade {
     public void changeTrainersPassword(Long id, String password, String username, String passwordAuth) throws InstanceNotFoundException {
         authorize(username, passwordAuth);
         trainerService.changePassword(id, password);
+    }
+
+    public void changeTrainersUsername(Long id, String newUsername, String oldUsername, String password) throws InstanceNotFoundException {
+        authorize(oldUsername, password);
+        trainerService.changeUsername(id, newUsername);
+    }
+
+    public void changeTrainersFirstName(Long id, String firstName, String username, String password) throws InstanceNotFoundException {
+        authorize(username, password);
+        trainerService.changeFirstName(id, firstName);
+    }
+
+    public void changeTrainersLastName(Long id, String lastName, String username, String password) throws InstanceNotFoundException {
+        authorize(username, password);
+        trainerService.changeLastName(id, lastName);
     }
 
     public void changeTrainersIsActive(Long id, Boolean isActive, String username, String password) throws InstanceNotFoundException {
@@ -158,5 +198,10 @@ public class GymFacade {
     public void createTraining(Long trainingId, String trainingName, LocalDate trainingDate, Number trainingDuration,
                                Long traineeId, Long trainerId, Long typeId) throws InstanceNotFoundException {
         trainingService.createTraining(trainingId, trainingName, trainingDate, trainingDuration, traineeId, trainerId, typeId);
+    }
+
+    public TrainingType getTrainingTypeByName(String trainingType, String username, String password) throws InstanceNotFoundException {
+        authorize(username, password);
+        return trainingService.getTrainingTypeByName(trainingType);
     }
 }

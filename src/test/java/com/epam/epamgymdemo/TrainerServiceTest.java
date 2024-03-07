@@ -89,7 +89,7 @@ class TrainerServiceTest {
         when(usernamePasswordGenerator.generatePassword()).thenReturn("password");
         when(trainingTypeDao.get(typeId)).thenReturn(trainingType);
 
-        trainerService.createTrainer(trainerId, typeId, userId, firstName, lastName, isActive);
+        trainerService.createTrainer(typeId, firstName, lastName, isActive);
 
         verify(userDao, times(1)).create(any(User.class));
         verify(trainerDao, times(1)).create(any(Trainer.class));

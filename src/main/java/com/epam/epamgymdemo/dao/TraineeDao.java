@@ -2,8 +2,6 @@ package com.epam.epamgymdemo.dao;
 
 import com.epam.epamgymdemo.model.Trainee;
 import com.epam.epamgymdemo.repository.TraineeRepository;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,7 +9,6 @@ import javax.management.InstanceNotFoundException;
 import java.util.List;
 
 @Repository
-@Slf4j
 public class TraineeDao implements DataCreator<Trainee>, DataSelector<Trainee>, DataUpdater<Trainee>, DataDeleter {
 
     private final TraineeRepository traineeRepository;
@@ -33,11 +30,7 @@ public class TraineeDao implements DataCreator<Trainee>, DataSelector<Trainee>, 
     @Override
     @Transactional
     public void create(Trainee trainee) {
-        if (traineeRepository.existsById(trainee.getId())) {
-            throw new DuplicateKeyException(String.format("Trainee with the id: %d already exists", trainee.getId()));
-        } else {
-            traineeRepository.save(trainee);
-        }
+        traineeRepository.save(trainee);
     }
 
     @Override

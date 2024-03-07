@@ -9,7 +9,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DuplicateKeyException;
 
 import javax.management.InstanceNotFoundException;
 import java.util.ArrayList;
@@ -65,18 +64,9 @@ public class TraineeDaoTest {
 
     @Test
     public void testCreateTrainee() {
-        when(traineeRepository.existsById(1L)).thenReturn(false);
-
         traineeDao.create(trainee);
 
         verify(traineeRepository, times(1)).save(trainee);
-    }
-
-    @Test
-    public void testCreateTraineeAlreadyExists() {
-        when(traineeRepository.existsById(1L)).thenReturn(true);
-
-        assertThrows(DuplicateKeyException.class, () -> traineeDao.create(trainee));
     }
 
     @Test

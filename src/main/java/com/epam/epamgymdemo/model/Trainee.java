@@ -1,5 +1,9 @@
 package com.epam.epamgymdemo.model;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,9 +20,11 @@ import java.util.Set;
 @NoArgsConstructor
 @Entity
 @Table(name = "trainee")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Trainee {
     @Id
     @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "date_of_birth")
@@ -26,7 +32,7 @@ public class Trainee {
     @Column(name = "address")
     private String address;
     @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
     @OneToMany(mappedBy = "trainee", cascade = CascadeType.ALL)
@@ -37,5 +43,6 @@ public class Trainee {
             joinColumns = { @JoinColumn(name = "trainee_id") },
             inverseJoinColumns = { @JoinColumn(name = "trainer_id") }
     )
+    @JsonManagedReference
     private Set<Trainer> trainers = new HashSet<>();
 }

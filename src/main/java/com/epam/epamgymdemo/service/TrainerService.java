@@ -1,11 +1,9 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.dao.TrainerDao;
-import com.epam.epamgymdemo.dao.TrainingDao;
-import com.epam.epamgymdemo.dao.TrainingTypeDao;
-import com.epam.epamgymdemo.dao.UserDao;
-import com.epam.epamgymdemo.generator.UsernamePasswordGenerator;
 import com.epam.epamgymdemo.model.*;
+import com.epam.epamgymdemo.repository.TrainerRepository;
+import com.epam.epamgymdemo.repository.TrainingRepository;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -17,91 +15,71 @@ import java.util.stream.Stream;
 
 @Service
 @Slf4j
+@AllArgsConstructor
 public class TrainerService {
 
-    private final TrainerDao trainerDao;
-    private final UserDao userDao;
-    private final TrainingTypeDao trainingTypeDao;
-    private final TrainingDao trainingDao;
-    private final UsernamePasswordGenerator usernamePasswordGenerator;
+    private final TrainerRepository trainerRepository;
+    private final TrainingRepository trainingRepository;
+    private final TrainingTypeService trainingTypeService;
+    private final UserService userService;
 
-    public TrainerService(TrainerDao trainerDao, UserDao userDao, TrainingTypeDao trainingTypeDao, TrainingDao trainingDao,
-                          UsernamePasswordGenerator usernamePasswordGenerator) {
-        this.trainerDao = trainerDao;
-        this.userDao = userDao;
-        this.trainingTypeDao = trainingTypeDao;
-        this.trainingDao = trainingDao;
-        this.usernamePasswordGenerator = usernamePasswordGenerator;
-    }
+    public void create(Long typeId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
+        User user = userService.create(firstName, lastName, isActive);
 
-    public void createTrainer(Long trainerId, Long typeId,
-                              Long userId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
-        String username = usernamePasswordGenerator.generateUsername(firstName, lastName);
-        String password = usernamePasswordGenerator.generatePassword();
-
-        User user = User.builder()
-                .id(userId)
-                .firstName(firstName)
-                .lastName(lastName)
-                .userName(username)
-                .password(password)
-                .isActive(isActive)
-                .build();
-        userDao.create(user);
-
-        log.info(String.format("User with the id: %d successfully created", userId));
-
-        TrainingType specialization = trainingTypeDao.get(typeId);
+        TrainingType specialization = trainingTypeService.getById(typeId);
 
         Trainer trainer = Trainer.builder()
-                .id(trainerId)
                 .trainingType(specialization)
-                .user(userDao.get(userId))
+                .user(user)
                 .build();
-        trainerDao.create(trainer);
+        trainerRepository.save(trainer);
 
-        log.info(String.format("Trainer with the id: %d successfully created", trainerId));
+        log.info(String.format("Trainer with the id: %d successfully created", trainer.getId()));
     }
 
-    public void updateTrainer(Long id, Long typeId, Long userId) throws InstanceNotFoundException {
-        Trainer trainer = trainerDao.get(id);
+    public void update(Long id, Long typeId, Long userId) throws InstanceNotFoundException {
+        Trainer trainer = this.getById(id);
 
         if (typeId != null) {
-            trainer.setTrainingType(trainingTypeDao.get(typeId));
+            trainer.setTrainingType(trainingTypeService.getById(typeId));
         }
         if (userId != null) {
-            trainer.setUser(userDao.get(userId));
+            trainer.setUser(userService.getById(userId));
         }
 
-        trainerDao.update(trainer);
+        trainerRepository.save(trainer);
 
         log.info(String.format("Trainer with the id: %d successfully updated", id));
     }
 
-    public Trainer selectTrainer(Long id) throws InstanceNotFoundException {
-        return trainerDao.get(id);
+    public Trainer getById(Long id) throws InstanceNotFoundException {
+        return trainerRepository.findById(id).orElseThrow(() -> new InstanceNotFoundException(String.format("Trainer not found with the id: %d", id)));
     }
 
     public List<Trainer> selectAllTrainers() {
-        return trainerDao.getAll();
+        return trainerRepository.findAll();
     }
 
-    public void changePassword(Long trainerId, String password) throws InstanceNotFoundException {
-        var trainer = trainerDao.get(trainerId);
-        userDao.updatePassword(trainer.getUser().getId(), password);
-        log.info(String.format("Password for the trainer with the id: %d successfully changed", trainerId));
+    public void changePassword(Long id, String password) throws InstanceNotFoundException {
+        var trainer = this.getById(id);
+
+        userService.changePassword(trainer.getUser().getId(), password);
+
+        log.info(String.format("Password for the trainer with the id: %d successfully changed", id));
     }
 
-    public void changeIsActive(Long trainerId, Boolean isActive) throws InstanceNotFoundException {
-        var trainer = trainerDao.get(trainerId);
-        userDao.updateIsActive(trainer.getUser().getId(), isActive);
-        log.info(String.format("Activity for the trainer with the id: %d successfully changed", trainerId));
+    public void changeIsActive(Long id, Boolean isActive) throws InstanceNotFoundException {
+        var trainer = this.getById(id);
+
+        userService.changeIsActive(trainer.getUser().getId(), isActive);
+
+        log.info(String.format("Activity for the trainer with the id: %d successfully changed", id));
     }
 
     public Trainer getByUsername(String username) throws InstanceNotFoundException {
-        User user = userDao.getByUsername(username);
+        User user = userService.getByUsername(username);
 
-        List<Trainer> trainers = trainerDao.getAll().stream().filter(t -> t.getUser().equals(user)).toList();
+        List<Trainer> trainers = trainerRepository.findAll().stream().filter(t -> t.getUser().equals(user)).toList();
 
         if (trainers.size() == 0) {
             throw new InstanceNotFoundException(String.format("Trainer with not found with the username: %s", username));
@@ -114,7 +92,7 @@ public class TrainerService {
                                                             String traineeName) throws InstanceNotFoundException {
         Trainer trainer = this.getByUsername(trainerUsername);
 
-        Stream<Training> trainingStream = trainingDao.getAll().stream().filter(t -> t.getTrainer().equals(trainer));
+        Stream<Training> trainingStream = trainingRepository.findAll().stream().filter(t -> t.getTrainer().equals(trainer));
 
         if (fromDate != null) {
             trainingStream = trainingStream.filter(t -> t.getTrainingDate().isEqual(fromDate) || t.getTrainingDate().isAfter(fromDate));

@@ -7,156 +7,152 @@ import com.epam.epamgymdemo.model.TrainingType;
 import com.epam.epamgymdemo.service.TraineeService;
 import com.epam.epamgymdemo.service.TrainerService;
 import com.epam.epamgymdemo.service.TrainingService;
+import com.epam.epamgymdemo.service.UserService;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import javax.management.InstanceNotFoundException;
+import javax.security.auth.login.CredentialNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
 
 @Component
+@AllArgsConstructor
 public class GymFacade {
 
     private final TraineeService traineeService;
     private final TrainerService trainerService;
     private final TrainingService trainingService;
+    private final UserService userService;
 
-    public GymFacade(TraineeService traineeService, TrainerService trainerService, TrainingService trainingService) {
-        this.traineeService = traineeService;
-        this.trainerService = trainerService;
-        this.trainingService = trainingService;
-    }
+    public void authorize(String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
+        var user = userService.getByUsername(username);
 
-    public void authorize(String username, String password) throws InstanceNotFoundException {
-        var trainer = trainerService.getByUsername(username);
-        var trainee = traineeService.getByUsername(username);
-
-        if ((trainee == null && trainer == null) ||
-                (trainee != null && !trainee.getUser().getPassword().equals(password)) ||
-                (trainer != null && !trainer.getUser().getPassword().equals(password))) {
-            throw new InstanceNotFoundException("Invalid username or password");
+        if (user == null || !user.getPassword().equals(password)) {
+            throw new CredentialNotFoundException("Invalid username or password");
         }
     }
 
-
-    public Trainee selectTrainee(Long id, String username, String password) throws InstanceNotFoundException {
+    public Trainee getTraineeById(Long id, String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
-        return traineeService.selectTrainee(id);
+        return traineeService.getById(id);
     }
 
-    public List<Trainee> selectAllTrainees(String username, String password) throws InstanceNotFoundException {
+    public List<Trainee> getAllTrainees(String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
-        return traineeService.selectAllTrainees();
+        return traineeService.getAll();
     }
 
-    public Trainee selectTraineeByUsername(String username, String usernameAuth, String password) throws InstanceNotFoundException {
+    public Trainee getTraineeByUsername(String username, String usernameAuth, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(usernameAuth, password);
         return traineeService.getByUsername(username);
     }
 
-    public void createTrainee(Long traineeId, LocalDate doB, String address,
-                              Long userId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
-        traineeService.createTrainee(traineeId, doB, address, userId, firstName, lastName, isActive);
+    public void createTrainee(LocalDate birthday, String address,
+                              String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
+        traineeService.create(birthday, address, firstName, lastName, isActive);
     }
 
-    public void updateTrainee(Long traineeId, LocalDate doB, String address, Long userId, String username, String password) throws InstanceNotFoundException {
+    public void updateTrainee(Long traineeId, LocalDate doB, String address, Long userId, String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
-        traineeService.updateTrainee(traineeId, doB, address, userId);
+        traineeService.update(traineeId, doB, address, userId);
     }
 
-    public void deleteTraineeById(Long id, String username, String password) throws InstanceNotFoundException {
+    public void deleteTraineeById(Long id, String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
-        traineeService.deleteTrainee(id);
+        traineeService.deleteById(id);
     }
 
-    public void deleteTraineeByUsername(String username, String usernameAuth, String password) throws InstanceNotFoundException {
+    public void deleteTraineeByUsername(String username, String usernameAuth, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(usernameAuth, password);
         traineeService.deleteByUsername(username);
     }
 
-    public void changeTraineesPassword(Long traineeId, String password, String username, String passwordAuth) throws InstanceNotFoundException {
+    public void changeTraineesPassword(Long traineeId, String password, String username, String passwordAuth) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, passwordAuth);
         traineeService.changePassword(traineeId, password);
     }
 
-    public void changeTraineesIsActive(Long traineeId, Boolean isActive, String username, String password) throws InstanceNotFoundException {
+    public void changeTraineesIsActive(Long traineeId, Boolean isActive, String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
         traineeService.changeIsActive(traineeId, isActive);
     }
 
-    public List<Training> selectTraineeTrainingsByUsernameAndCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate,
-                                                                   String trainerName, TrainingType trainingType, String username, String password) throws InstanceNotFoundException {
+    public List<Training> getTraineeTrainingsByUsernameAndCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate,
+                                                                   String trainerName, TrainingType trainingType, String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
         return traineeService.getTrainingsByUsernameAndCriteria(traineeUsername, fromDate, toDate, trainerName, trainingType);
     }
 
-    public List<Trainer> selectTrainersUnassignedToTrainee(String username, String usernameAuth, String password) throws InstanceNotFoundException {
+    public List<Trainer> getTrainersUnassignedToTrainee(String username, String usernameAuth, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(usernameAuth, password);
-        return traineeService.getTrainersUnassignedToTrainee(username);
+        return traineeService.getUnassignedTrainers(username);
     }
 
-    public void addTrainerToTrainersList(Long id, Trainer trainer, String username, String password) throws InstanceNotFoundException {
+    public void addTrainerToTrainersList(Long id, Trainer trainer, String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
-        traineeService.addTrainerToTraineesTrainersList(id, trainer);
+        traineeService.addTrainerToTrainersList(id, trainer);
     }
 
-    public void removeTrainerFromTraineesTrainersList(Long id, Trainer trainer, String username, String password) throws InstanceNotFoundException {
+    public void removeTrainerFromTraineesTrainersList(Long id, Trainer trainer, String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
-        traineeService.removeTrainerFromTraineesTrainersList(id, trainer);
+        traineeService.removeTrainerFromTrainersList(id, trainer);
     }
 
-    public Trainer selectTrainer(Long id, String username, String password) throws InstanceNotFoundException {
+    public Trainer getTrainerById(Long id, String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
-        return trainerService.selectTrainer(id);
+        return trainerService.getById(id);
     }
 
-    public List<Trainer> selectAllTrainers(String username, String password) throws InstanceNotFoundException {
+    public List<Trainer> getAllTrainers(String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
         return trainerService.selectAllTrainers();
     }
 
-    public Trainer selectTrainerByUsername(String username, String usernameAuth, String password) throws InstanceNotFoundException {
+    public Trainer getTrainerByUsername(String username, String usernameAuth, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(usernameAuth, password);
         return trainerService.getByUsername(username);
     }
 
-    public void createTrainer(Long trainerId, Long typeId,
-                              Long userId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
-        trainerService.createTrainer(trainerId, typeId, userId, firstName, lastName, isActive);
+    public void createTrainer(Long typeId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
+        trainerService.create(typeId, firstName, lastName, isActive);
     }
 
-    public void updateTrainer(Long trainerId, Long typeId, Long userId, String username, String password) throws InstanceNotFoundException {
+    public void updateTrainer(Long trainerId, Long typeId, Long userId, String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
-        trainerService.updateTrainer(trainerId, typeId, userId);
+        trainerService.update(trainerId, typeId, userId);
     }
 
-    public void changeTrainersPassword(Long id, String password, String username, String passwordAuth) throws InstanceNotFoundException {
+    public void changeTrainersPassword(Long id, String password, String username, String passwordAuth) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, passwordAuth);
         trainerService.changePassword(id, password);
     }
 
-    public void changeTrainersIsActive(Long id, Boolean isActive, String username, String password) throws InstanceNotFoundException {
+    public void changeTrainersIsActive(Long id, Boolean isActive, String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
         trainerService.changeIsActive(id, isActive);
     }
 
     public List<Training> selectTrainerTrainingsByUsernameAndCriteria(String trainerUsername, LocalDate fromDate, LocalDate toDate,
-                                                            String traineeName, String username, String password) throws InstanceNotFoundException {
+                                                            String traineeName, String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
         return trainerService.getTrainingsByUsernameAndCriteria(trainerUsername, fromDate, toDate, traineeName);
     }
 
-    public Training selectTraining(Long id, String username, String password) throws InstanceNotFoundException {
+    public Training getTrainingById(Long id, String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
-        return trainingService.selectTraining(id);
+        return trainingService.getById(id);
     }
 
-    public List<Training> selectAllTrainings(String username, String password) throws InstanceNotFoundException {
+    public List<Training> getAllTrainings(String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
         authorize(username, password);
-        return trainingService.selectAllTrainings();
+        return trainingService.getAll();
     }
 
-    public void createTraining(Long trainingId, String trainingName, LocalDate trainingDate, Number trainingDuration,
-                               Long traineeId, Long trainerId, Long typeId) throws InstanceNotFoundException {
-        trainingService.createTraining(trainingId, trainingName, trainingDate, trainingDuration, traineeId, trainerId, typeId);
+    public void createTraining(String trainingName, LocalDate trainingDate, Number trainingDuration,
+                               Long traineeId, Long trainerId, Long typeId,
+                               String username, String password) throws InstanceNotFoundException, CredentialNotFoundException {
+        authorize(username, password);
+        trainingService.create(trainingName, trainingDate, trainingDuration, traineeId, trainerId, typeId);
     }
 }

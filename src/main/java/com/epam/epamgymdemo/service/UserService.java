@@ -27,7 +27,7 @@ public class UserService {
                         .firstName(firstName)
                         .lastName(lastName)
                         .isActive(isActive)
-                        .userName(username)
+                        .username(username)
                         .password(password)
                         .build();
 
@@ -47,9 +47,9 @@ public class UserService {
     }
 
     public User getByUsername(String username) throws InstanceNotFoundException {
-        if (!userRepository.existsByUserName(username)) {
+        if (!userRepository.existsByUsername(username)) {
             throw new InstanceNotFoundException(String.format("User not found with the username: %s", username));
-        } else return userRepository.findByUserName(username);
+        } else return userRepository.findByUsername(username);
     }
 
     @Transactional

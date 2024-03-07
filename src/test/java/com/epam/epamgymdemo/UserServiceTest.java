@@ -51,7 +51,7 @@ public class UserServiceTest {
         assertEquals("John", createdUser.getFirstName());
         assertEquals("Doe", createdUser.getLastName());
         assertEquals(true, createdUser.getIsActive());
-        assertEquals("johndoe", createdUser.getUserName());
+        assertEquals("johndoe", createdUser.getUsername());
         assertEquals("password", createdUser.getPassword());
     }
 
@@ -89,21 +89,21 @@ public class UserServiceTest {
     void testGetByUsername() throws InstanceNotFoundException {
         User user = new User();
         user.setId(1L);
-        user.setUserName("john_doe");
+        user.setUsername("john_doe");
 
-        when(userRepository.existsByUserName("john_doe")).thenReturn(true);
-        when(userRepository.findByUserName("john_doe")).thenReturn(user);
+        when(userRepository.existsByUsername("john_doe")).thenReturn(true);
+        when(userRepository.findByUsername("john_doe")).thenReturn(user);
 
         User foundUser = userService.getByUsername("john_doe");
 
         assertNotNull(foundUser);
         assertEquals(user.getId(), foundUser.getId());
-        assertEquals(user.getUserName(), foundUser.getUserName());
+        assertEquals(user.getUsername(), foundUser.getUsername());
     }
 
     @Test
     void testGetByUsername_NotFound() {
-        when(userRepository.existsByUserName("john_doe")).thenReturn(false);
+        when(userRepository.existsByUsername("john_doe")).thenReturn(false);
 
         assertThrows(InstanceNotFoundException.class, () -> userService.getByUsername("john_doe"));
     }

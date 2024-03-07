@@ -38,7 +38,7 @@ public class UsernamePasswordGeneratorTest {
                 .id(1L)
                 .firstName(firstName)
                 .lastName(lastName)
-                .userName("John.Doe")
+                .username("John.Doe")
                 .isActive(true)
                 .build();
         users.add(user1);
@@ -47,7 +47,7 @@ public class UsernamePasswordGeneratorTest {
                 .id(2L)
                 .firstName(firstName)
                 .lastName(lastName)
-                .userName("John.Doe1")
+                .username("John.Doe1")
                 .isActive(true)
                 .build();
         users.add(user2);

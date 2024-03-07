@@ -4,10 +4,7 @@ import com.epam.epamgymdemo.facade.GymFacade;
 import com.epam.epamgymdemo.model.Trainee;
 import com.epam.epamgymdemo.model.Trainer;
 import com.epam.epamgymdemo.model.User;
-import com.epam.epamgymdemo.service.TraineeService;
-import com.epam.epamgymdemo.service.TrainerService;
-import com.epam.epamgymdemo.service.TrainingService;
-import com.epam.epamgymdemo.service.UserService;
+import com.epam.epamgymdemo.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,20 +32,21 @@ public class GymFacadeTest {
     @Mock
     private TrainingService trainingService;
     @Mock
-    private UserService userService;
+    private AuthenticationService authenticationService;
     @InjectMocks
     private GymFacade gymFacade;
     private Trainer trainer;
     private Trainee trainee;
+    private String token;
 
     @BeforeEach
     void setUp() throws InstanceNotFoundException {
-        gymFacade = new GymFacade(traineeService, trainerService, trainingService, userService);
+        gymFacade = new GymFacade(traineeService, trainerService, trainingService, authenticationService);
 
         trainer = Trainer.builder()
                 .id(1L)
                 .user(User.builder()
-                        .userName("trainer")
+                        .username("trainer")
                         .password("password")
                         .build())
                 .build();
@@ -55,23 +54,33 @@ public class GymFacadeTest {
         trainee = Trainee.builder()
                 .id(1L)
                 .user(User.builder()
-                        .userName("trainee")
+                        .username("trainee")
                         .password("password")
                         .build())
                 .birthday(LocalDate.now())
                 .address("123 Street")
                 .build();
 
+        token = authenticationService.authenticateUser("trainee", "password");
+
         Mockito.lenient().when(trainerService.getByUsername("trainer")).thenReturn(new Trainer());
         Mockito.lenient().when(trainerService.getByUsername("trainee")).thenReturn(new Trainer());
     }
 
     @Test
+    void testAuthenticate() throws InstanceNotFoundException, CredentialNotFoundException {
+        when(authenticationService.authenticateUser("username", "password")).thenReturn("token");
+
+        String token = gymFacade.authenticate("username", "password");
+
+        assertNotNull(token);
+    }
+
+    @Test
     void testSelectTrainee() throws InstanceNotFoundException, CredentialNotFoundException {
-        when(userService.getByUsername("trainee")).thenReturn(trainee.getUser());
         when(traineeService.getById(1L)).thenReturn(trainee);
 
-        Trainee selectedTrainee = gymFacade.getTraineeById(1L, "trainee", "password");
+        Trainee selectedTrainee = gymFacade.getTraineeById(1L, token);
 
         assertEquals(trainee, selectedTrainee);
 
@@ -79,12 +88,11 @@ public class GymFacadeTest {
     }
 
     @Test
-    void testSelectAllTrainees() throws InstanceNotFoundException, CredentialNotFoundException {
-        when(userService.getByUsername("trainee")).thenReturn(trainee.getUser());
+    void testSelectAllTrainees() throws CredentialNotFoundException {
         List<Trainee> trainees = Collections.singletonList(trainee);
         when(traineeService.getAll()).thenReturn(trainees);
 
-        List<Trainee> selectedTrainees = gymFacade.getAllTrainees("trainee", "password");
+        List<Trainee> selectedTrainees = gymFacade.getAllTrainees("token");
 
         assertEquals(trainees, selectedTrainees);
 
@@ -100,10 +108,9 @@ public class GymFacadeTest {
 
     @Test
     void testSelectTrainer() throws InstanceNotFoundException, CredentialNotFoundException {
-        when(userService.getByUsername("trainer")).thenReturn(trainee.getUser());
         when(trainerService.getById(1L)).thenReturn(trainer);
 
-        Trainer selectedTrainer = gymFacade.getTrainerById(1L, "trainer", "password");
+        Trainer selectedTrainer = gymFacade.getTrainerById(1L, token);
 
         assertEquals(trainer, selectedTrainer);
 
@@ -111,12 +118,11 @@ public class GymFacadeTest {
     }
 
     @Test
-    void testSelectAllTrainers() throws InstanceNotFoundException, CredentialNotFoundException {
-        when(userService.getByUsername("trainer")).thenReturn(trainee.getUser());
+    void testSelectAllTrainers() throws CredentialNotFoundException {
         List<Trainer> trainers = Collections.singletonList(trainer);
         when(trainerService.selectAllTrainers()).thenReturn(trainers);
 
-        List<Trainer> selectedTrainers = gymFacade.getAllTrainers("trainer", "password");
+        List<Trainer> selectedTrainers = gymFacade.getAllTrainers(token);
 
         assertEquals(trainers, selectedTrainers);
 
@@ -132,43 +138,38 @@ public class GymFacadeTest {
 
     @Test
     void testUpdateTrainee() throws InstanceNotFoundException, CredentialNotFoundException {
-        when(userService.getByUsername("trainee")).thenReturn(trainee.getUser());
-        gymFacade.updateTrainee(1L, LocalDate.now(), "Address", 1L, "trainee", "password");
+        gymFacade.updateTrainee(1L, LocalDate.now(), "Address", 1L, token);
 
         verify(traineeService, times(1)).update(1L, LocalDate.now(), "Address", 1L);
     }
 
     @Test
-    void testDeleteTraineeById() throws InstanceNotFoundException, CredentialNotFoundException {
-        when(userService.getByUsername("trainee")).thenReturn(trainee.getUser());
-        gymFacade.deleteTraineeById(1L, "trainee", "password");
+    void testDeleteTraineeById() throws CredentialNotFoundException {
+        gymFacade.deleteTraineeById(1L, token);
 
         verify(traineeService, times(1)).deleteById(1L);
     }
 
     @Test
     void testDeleteTraineeByUsername() throws InstanceNotFoundException, CredentialNotFoundException {
-        when(userService.getByUsername("trainee")).thenReturn(trainee.getUser());
-        gymFacade.deleteTraineeByUsername("trainee", "trainee", "password");
+        gymFacade.deleteTraineeByUsername("trainee", token);
 
         verify(traineeService, times(1)).deleteByUsername("trainee");
     }
 
     @Test
     void testChangeTraineesPassword() throws InstanceNotFoundException, CredentialNotFoundException {
-        when(userService.getByUsername("trainee")).thenReturn(trainee.getUser());
-        gymFacade.changeTraineesPassword(1L, "newpassword", "trainee", "password");
+        gymFacade.changeTraineesPassword(1L, "newpassword", token);
 
         verify(traineeService, times(1)).changePassword(1L, "newpassword");
     }
 
     @Test
     public void testChangeTraineesIsActive() throws InstanceNotFoundException, CredentialNotFoundException {
-        when(userService.getByUsername("trainee")).thenReturn(trainee.getUser());
         Long traineeId = 1L;
         Boolean isActive = true;
 
-        gymFacade.changeTraineesIsActive(traineeId, isActive, "trainee", "password");
+        gymFacade.changeTraineesIsActive(traineeId, isActive, token);
 
         verify(traineeService, times(1)).changeIsActive(traineeId, isActive);
     }

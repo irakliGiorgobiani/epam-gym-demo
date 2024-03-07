@@ -17,7 +17,7 @@ public class UsernamePasswordGenerator {
         String baseUsername = firstName + "." + lastName;
         String resultName;
 
-        List<String> usernames = userRepository.findAll().stream().map(User::getUserName).toList();
+        List<String> usernames = userRepository.findAll().stream().map(User::getUsername).toList();
         long count = usernames.stream().filter(s -> s.contains(baseUsername)).count();
 
         if (count != 0) {

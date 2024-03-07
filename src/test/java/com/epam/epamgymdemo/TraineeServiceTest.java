@@ -156,30 +156,30 @@ class TraineeServiceTest {
 
     @Test
     void testGetByUsername() throws InstanceNotFoundException {
-        when(userService.getByUsername(user.getUserName())).thenReturn(user);
+        when(userService.getByUsername(user.getUsername())).thenReturn(user);
         when(traineeRepository.findAll()).thenReturn(List.of(trainee));
 
-        Trainee selectedTrainee = traineeService.getByUsername(user.getUserName());
+        Trainee selectedTrainee = traineeService.getByUsername(user.getUsername());
 
         assertEquals(trainee, selectedTrainee);
     }
 
     @Test
     void testDeleteByUsername() throws InstanceNotFoundException {
-        when(userService.getByUsername(user.getUserName())).thenReturn(user);
+        when(userService.getByUsername(user.getUsername())).thenReturn(user);
 
-        traineeService.deleteByUsername(user.getUserName());
+        traineeService.deleteByUsername(user.getUsername());
 
         verify(traineeRepository, times(1)).deleteById(userId);
     }
 
     @Test
     void testGetTrainingsByUsernameAndCriteria() throws InstanceNotFoundException {
-        when(userService.getByUsername(user.getUserName())).thenReturn(user);
+        when(userService.getByUsername(user.getUsername())).thenReturn(user);
         when(traineeRepository.findAll()).thenReturn(List.of(trainee));
         when(trainingRepository.findAll()).thenReturn(List.of(training));
 
-        List<Training> trainingsByUsernameAndCriteria = traineeService.getTrainingsByUsernameAndCriteria(user.getUserName(),
+        List<Training> trainingsByUsernameAndCriteria = traineeService.getTrainingsByUsernameAndCriteria(user.getUsername(),
                 LocalDate.of(2020, 1, 1), null, null, null);
 
         assertEquals(training, trainingsByUsernameAndCriteria.get(0));
@@ -188,12 +188,12 @@ class TraineeServiceTest {
 
     @Test
     void testGetTrainerUnassignedToTrainee() throws InstanceNotFoundException {
-        when(userService.getByUsername(user.getUserName())).thenReturn(user);
+        when(userService.getByUsername(user.getUsername())).thenReturn(user);
         when(traineeRepository.findAll()).thenReturn(List.of(trainee));
         when(trainerRepository.findAll()).thenReturn(List.of(trainer1, trainer2));
         trainee.getTrainers().add(trainer1);
 
-        List<Trainer> trainersUnassignedToTrainee = traineeService.getUnassignedTrainers(user.getUserName());
+        List<Trainer> trainersUnassignedToTrainee = traineeService.getUnassignedTrainers(user.getUsername());
 
         assertEquals(trainer2, trainersUnassignedToTrainee.get(0));
         assertEquals(1, trainersUnassignedToTrainee.size());

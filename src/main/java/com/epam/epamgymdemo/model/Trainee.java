@@ -1,5 +1,6 @@
 package com.epam.epamgymdemo.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
@@ -50,6 +51,7 @@ public class Trainee {
     private User user;
 
     @OneToMany(mappedBy = "trainee", cascade = CascadeType.ALL)
+    @JsonBackReference
     private final List<Training> trainings = new ArrayList<>();
     @ManyToMany
     @JoinTable(

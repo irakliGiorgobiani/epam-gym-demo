@@ -4,6 +4,8 @@ import com.epam.epamgymdemo.facade.GymFacade;
 import com.epam.epamgymdemo.model.Trainer;
 import com.epam.epamgymdemo.model.Training;
 import com.epam.epamgymdemo.model.User;
+import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.management.InstanceNotFoundException;
@@ -13,13 +15,10 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/trainer")
+@AllArgsConstructor
+@RequestMapping("/trainers")
 public class TrainerController {
     private final GymFacade gymFacade;
-
-    public TrainerController(GymFacade gymFacade) {
-        this.gymFacade = gymFacade;
-    }
 
     @PostMapping("/register")
     public Map<String, String> register(@RequestBody Map<String, String> requestBody) throws InstanceNotFoundException {
@@ -35,8 +34,9 @@ public class TrainerController {
 
     @GetMapping("/{username}")
     public Map<String, Object> get(@PathVariable String username,
-                                   @RequestHeader(name = "username") String usernameAuth, @RequestHeader String password) throws InstanceNotFoundException, CredentialNotFoundException {
+                                   @RequestHeader(name = "username") String usernameAuth, @RequestHeader(name = "password") String password) throws InstanceNotFoundException, CredentialNotFoundException {
         String token = gymFacade.authenticate(usernameAuth, password);
+
         Trainer trainer = gymFacade.getTrainerByUsername(username, token);
         User user = trainer.getUser();
 
@@ -49,15 +49,15 @@ public class TrainerController {
     }
 
     @PutMapping("/update")
-    public Map<String, Object> update(@RequestHeader(name = "username") String oldUsername, @RequestHeader String password,
+    public Map<String, Object> update(@RequestHeader(name = "username") String oldUsername, @RequestHeader(name = "password") String password,
                                       @RequestBody Map<String, String> requestBody) throws InstanceNotFoundException, CredentialNotFoundException {
+        String token = gymFacade.authenticate(oldUsername, password);
+
         String newUsername = requestBody.get("username");
         String firstName = requestBody.get("firstName");
         String lastName = requestBody.get("lastName");
         Long trainingType = Long.parseLong(requestBody.get("specialization"));
         Boolean isActive = Boolean.parseBoolean(requestBody.get("isActive"));
-
-        String token = gymFacade.authenticate(oldUsername, password);
 
         Trainer trainer = gymFacade.getTrainerByUsername(oldUsername, token);
         User user = trainer.getUser();
@@ -84,6 +84,19 @@ public class TrainerController {
                                            @RequestHeader(name = "username") String usernameAuth,
                                            @RequestHeader(name = "password") String password) throws InstanceNotFoundException, CredentialNotFoundException {
         String token = gymFacade.authenticate(usernameAuth, password);
-        return gymFacade.selectTrainerTrainingsByUsernameAndCriteria(username, fromDate, toDate, traineeName, token);
+
+        return gymFacade.getTrainerTrainingsByUsernameAndCriteria(username, fromDate, toDate, traineeName, token);
+    }
+
+    @PatchMapping("/{username}/change-isActive/{isActive}")
+    public ResponseEntity<String> changeIsActive(@PathVariable String username, @PathVariable Boolean isActive,
+                                                 @RequestHeader(name = "username") String usernameAuth, @RequestHeader(name = "password") String password) throws InstanceNotFoundException, CredentialNotFoundException {
+        String token = gymFacade.authenticate(usernameAuth, password);
+
+        Long id = gymFacade.getTrainerByUsername(username, token).getId();
+
+        gymFacade.changeTrainersIsActive(id, isActive, token);
+
+        return ResponseEntity.ok(String.format("isActive changed successfully for the trainer with the username: %s", username));
     }
 }

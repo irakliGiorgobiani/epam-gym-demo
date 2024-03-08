@@ -8,6 +8,7 @@ import com.epam.epamgymdemo.repository.TrainingRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.management.InstanceNotFoundException;
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ public class TrainingService {
     private final TraineeService traineeService;
     private final TrainingTypeService trainingTypeService;
 
+    @Transactional
     public void create(String trainingName, LocalDate trainingDate, Number trainingDuration,
                        Long traineeId, Long trainerId, Long typeId) throws InstanceNotFoundException {
         Trainee trainee = traineeService.getById(traineeId);

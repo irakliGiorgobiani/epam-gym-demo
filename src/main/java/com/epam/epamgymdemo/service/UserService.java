@@ -53,6 +53,13 @@ public class UserService {
     }
 
     @Transactional
+    public void deleteById(Long id) {
+        userRepository.deleteById(id);
+
+        log.info(String.format("User with the id: %d has been successfully deleted", id));
+    }
+
+    @Transactional
     public void changeUsername(Long id, String username) throws InstanceNotFoundException {
         User user = this.getById(id);
 

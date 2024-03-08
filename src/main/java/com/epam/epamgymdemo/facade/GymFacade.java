@@ -68,7 +68,7 @@ public class GymFacade {
         traineeService.update(traineeId, doB, address, userId);
     }
 
-    public void deleteTraineeById(Long id, String token) throws CredentialNotFoundException {
+    public void deleteTraineeById(Long id, String token) throws CredentialNotFoundException, InstanceNotFoundException {
         authenticationService.isAuthorized(token);
         traineeService.deleteById(id);
     }
@@ -114,7 +114,7 @@ public class GymFacade {
         return traineeService.getUnassignedTrainers(username);
     }
 
-    public Set<Trainer> selectTraineesTrainerList(Long id, String token) throws InstanceNotFoundException, CredentialNotFoundException {
+    public Set<Trainer> getTraineesTrainerList(Long id, String token) throws InstanceNotFoundException, CredentialNotFoundException {
         authenticationService.isAuthorized(token);
         return traineeService.getTraineeTrainersList(id);
     }
@@ -136,7 +136,7 @@ public class GymFacade {
 
     public List<Trainer> getAllTrainers(String token) throws CredentialNotFoundException {
         authenticationService.isAuthorized(token);
-        return trainerService.selectAllTrainers();
+        return trainerService.getAll();
     }
 
     public Trainer getTrainerByUsername(String username, String token) throws InstanceNotFoundException, CredentialNotFoundException {
@@ -178,8 +178,8 @@ public class GymFacade {
         trainerService.changeIsActive(id, isActive);
     }
 
-    public List<Training> selectTrainerTrainingsByUsernameAndCriteria(String trainerUsername, LocalDate fromDate, LocalDate toDate,
-                                                            String traineeName, String token) throws InstanceNotFoundException, CredentialNotFoundException {
+    public List<Training> getTrainerTrainingsByUsernameAndCriteria(String trainerUsername, LocalDate fromDate, LocalDate toDate,
+                                                                   String traineeName, String token) throws InstanceNotFoundException, CredentialNotFoundException {
         authenticationService.isAuthorized(token);
         return trainerService.getTrainingsByUsernameAndCriteria(trainerUsername, fromDate, toDate, traineeName);
     }
@@ -204,5 +204,10 @@ public class GymFacade {
     public TrainingType getTrainingTypeByName(String trainingType, String token) throws CredentialNotFoundException, InstanceNotFoundException {
         authenticationService.isAuthorized(token);
         return trainingTypeService.getTrainingTypeByName(trainingType);
+    }
+
+    public List<TrainingType> getAllTrainingTypes(String token) throws CredentialNotFoundException {
+        authenticationService.isAuthorized(token);
+        return trainingTypeService.getAll();
     }
 }

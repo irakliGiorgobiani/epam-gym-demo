@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.management.InstanceNotFoundException;
 import java.time.LocalDate;
@@ -26,6 +27,7 @@ public class TrainerService {
     private final TrainingTypeService trainingTypeService;
     private final UserService userService;
 
+    @Transactional
     public Trainer create(Long typeId, String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
         User user = userService.create(firstName, lastName, isActive);
         TrainingType specialization = trainingTypeService.getById(typeId);
@@ -41,6 +43,7 @@ public class TrainerService {
         return trainer;
     }
 
+    @Transactional
     public void update(Long id, Long typeId, Long userId) throws InstanceNotFoundException {
         Trainer trainer = this.getById(id);
 
@@ -60,10 +63,11 @@ public class TrainerService {
         return trainerRepository.findById(id).orElseThrow(() -> new InstanceNotFoundException(String.format("Trainer not found with the id: %d", id)));
     }
 
-    public List<Trainer> selectAllTrainers() {
+    public List<Trainer> getAll() {
         return trainerRepository.findAll();
     }
 
+    @Transactional
     public void changePassword(Long id, String password) throws InstanceNotFoundException {
         var trainer = this.getById(id);
 
@@ -72,6 +76,7 @@ public class TrainerService {
         log.info(String.format("Password for the trainer with the id: %d successfully changed", id));
     }
 
+    @Transactional
     public void changeIsActive(Long id, Boolean isActive) throws InstanceNotFoundException {
         var trainer = this.getById(id);
 
@@ -111,6 +116,7 @@ public class TrainerService {
         return trainingStream.toList();
     }
 
+    @Transactional
     public void changeUsername(Long id, String username) throws InstanceNotFoundException {
         var trainer = this.getById(id);
 
@@ -119,6 +125,7 @@ public class TrainerService {
         log.info(String.format("Username for the trainer with the id: %d successfully changed", id));
     }
 
+    @Transactional
     public void changeFirstName(Long id, String firstName) throws InstanceNotFoundException {
         var trainer = this.getById(id);
 
@@ -127,6 +134,7 @@ public class TrainerService {
         log.info(String.format("First name for the trainee with the id: %d successfully changed", id));
     }
 
+    @Transactional
     public void changeLastName(Long id, String lastName) throws InstanceNotFoundException {
         var trainer = this.getById(id);
 

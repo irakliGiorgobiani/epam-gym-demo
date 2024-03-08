@@ -2,6 +2,7 @@ package com.epam.epamgymdemo.controller;
 
 import com.epam.epamgymdemo.facade.GymFacade;
 import com.epam.epamgymdemo.model.*;
+import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,23 +14,19 @@ import java.util.Map;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/trainee")
+@AllArgsConstructor
+@RequestMapping("/trainees")
 public class TraineeController {
-
     private final GymFacade gymFacade;
-
-    public TraineeController(GymFacade gymFacade) {
-        this.gymFacade = gymFacade;
-    }
 
     @PostMapping("/register")
     public Map<String, String> register(@RequestBody Map<String, String> requestBody) throws InstanceNotFoundException {
         String firstName = requestBody.get("firstName");
         String lastName = requestBody.get("lastName");
-        LocalDate dateOfBirth = LocalDate.parse(requestBody.get("dateOfBirth"));
+        LocalDate birthday = LocalDate.parse(requestBody.get("birthday"));
         String address = requestBody.get("address");
 
-        Trainee trainee = gymFacade.createTrainee(dateOfBirth, address, firstName, lastName, true);
+        Trainee trainee = gymFacade.createTrainee(birthday, address, firstName, lastName, true);
 
         return Map.of("username", trainee.getUser().getUsername(),
                 "password", trainee.getUser().getPassword());
@@ -60,9 +57,9 @@ public class TraineeController {
         String newUsername = requestBody.get("username");
         String firstName = requestBody.get("firstName");
         String lastName = requestBody.get("lastName");
-        LocalDate dateOfBirth = null;
-        if (requestBody.containsKey("dateOfBirth")) {
-            dateOfBirth = LocalDate.parse(requestBody.get("dateOfBirth"));
+        LocalDate birthday = null;
+        if (requestBody.containsKey("birthday")) {
+            birthday = LocalDate.parse(requestBody.get("birthday"));
         }
         String address = null;
         if (requestBody.containsKey("address")) {
@@ -71,16 +68,17 @@ public class TraineeController {
         Boolean isActive = Boolean.parseBoolean(requestBody.get("isActive"));
 
         Trainee trainee = gymFacade.getTraineeByUsername(oldUsername, token);
+        Long id = trainee.getId();
         User user = trainee.getUser();
 
-        gymFacade.updateTrainee(trainee.getId(), dateOfBirth, address, user.getId(), token);
-        gymFacade.changeTraineesIsActive(trainee.getId(), isActive, token);
-        gymFacade.changeTraineesFirstName(trainee.getId(), firstName, token);
-        gymFacade.changeTraineesLastName(trainee.getId(), lastName, token);
-        gymFacade.changeTraineesUsername(trainee.getId(), newUsername, token);
+        gymFacade.updateTrainee(id, birthday, address, user.getId(), token);
+        gymFacade.changeTraineesIsActive(id, isActive, token);
+        gymFacade.changeTraineesFirstName(id, firstName, token);
+        gymFacade.changeTraineesLastName(id, lastName, token);
+        gymFacade.changeTraineesUsername(id, newUsername, token);
 
         return Map.of("username", user.getUsername(),"firstName", user.getFirstName(), "lastName", user.getLastName(),
-                "dateOfBirth", trainee.getBirthday(), "address", trainee.getAddress(),
+                "birthday", trainee.getBirthday(), "address", trainee.getAddress(),
                 "isActive", user.getIsActive(), "trainersList", trainee.getTrainers().stream()
                         .map(t -> Map.of("username", t.getUser().getUsername(), "firstName", t.getUser().getFirstName(),
                                 "lastName", t.getUser().getLastName(), "specialization", t.getTrainingType().getId()))
@@ -132,7 +130,7 @@ public class TraineeController {
             gymFacade.addTrainerToTrainersList(id, trainer, token);
         }
 
-        return gymFacade.selectTraineesTrainerList(id, token);
+        return gymFacade.getTraineesTrainerList(id, token);
     }
 
     @GetMapping("/{username}/trainingsList")
@@ -151,5 +149,17 @@ public class TraineeController {
         }
 
         return gymFacade.getTraineeTrainingsByUsernameAndCriteria(username, fromDate, toDate, trainerName, trainingType, token);
+    }
+
+    @PatchMapping("/{username}/change-isActive/{isActive}")
+    public ResponseEntity<String> changeIsActive(@PathVariable String username, @PathVariable Boolean isActive,
+                                                 @RequestHeader(name = "username") String usernameAuth, @RequestHeader(name = "password") String password) throws InstanceNotFoundException, CredentialNotFoundException {
+        String token = gymFacade.authenticate(usernameAuth, password);
+
+        Long id = gymFacade.getTraineeByUsername(username, token).getId();
+
+        gymFacade.changeTraineesIsActive(id, isActive, token);
+
+        return ResponseEntity.ok(String.format("isActive changed successfully for the trainee with the username: %s", username));
     }
 }

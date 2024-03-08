@@ -45,6 +45,7 @@ public class Trainer {
     @JoinColumn(name = "user_id")
     private User user;
     @OneToMany(mappedBy = "trainer")
+    @JsonBackReference
     private final List<Training> trainings = new ArrayList<>();
     @ManyToMany(mappedBy = "trainers")
     @JsonBackReference

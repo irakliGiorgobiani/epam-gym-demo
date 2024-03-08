@@ -66,4 +66,3 @@ public class UsernamePasswordGeneratorTest {
         assertEquals(10, result.length());
     }
 }
-

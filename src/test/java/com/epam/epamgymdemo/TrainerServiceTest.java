@@ -107,7 +107,7 @@ class TrainerServiceTest {
     void testSelectAllTrainers() {
         when(trainerRepository.findAll()).thenReturn(List.of(trainer));
 
-        List<Trainer> trainers = trainerService.selectAllTrainers();
+        List<Trainer> trainers = trainerService.getAll();
 
         assertEquals(List.of(trainer), trainers);
     }

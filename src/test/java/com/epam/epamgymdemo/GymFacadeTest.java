@@ -33,6 +33,10 @@ public class GymFacadeTest {
     private TrainingService trainingService;
     @Mock
     private AuthenticationService authenticationService;
+    @Mock
+    private UserService userService;
+    @Mock
+    private TrainingTypeService trainingTypeService;
     @InjectMocks
     private GymFacade gymFacade;
     private Trainer trainer;
@@ -41,7 +45,7 @@ public class GymFacadeTest {
 
     @BeforeEach
     void setUp() throws InstanceNotFoundException {
-        gymFacade = new GymFacade(traineeService, trainerService, trainingService, authenticationService);
+        gymFacade = new GymFacade(traineeService, trainerService, trainingService, authenticationService, userService, trainingTypeService);
 
         trainer = Trainer.builder()
                 .id(1L)
@@ -120,13 +124,13 @@ public class GymFacadeTest {
     @Test
     void testSelectAllTrainers() throws CredentialNotFoundException {
         List<Trainer> trainers = Collections.singletonList(trainer);
-        when(trainerService.selectAllTrainers()).thenReturn(trainers);
+        when(trainerService.getAll()).thenReturn(trainers);
 
         List<Trainer> selectedTrainers = gymFacade.getAllTrainers(token);
 
         assertEquals(trainers, selectedTrainers);
 
-        verify(trainerService, times(1)).selectAllTrainers();
+        verify(trainerService, times(1)).getAll();
     }
 
     @Test
@@ -144,7 +148,7 @@ public class GymFacadeTest {
     }
 
     @Test
-    void testDeleteTraineeById() throws CredentialNotFoundException {
+    void testDeleteTraineeById() throws CredentialNotFoundException, InstanceNotFoundException {
         gymFacade.deleteTraineeById(1L, token);
 
         verify(traineeService, times(1)).deleteById(1L);

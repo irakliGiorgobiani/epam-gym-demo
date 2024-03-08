@@ -45,4 +45,3 @@ public class AuthenticationService {
         return UUID.randomUUID().toString();
     }
 }
-

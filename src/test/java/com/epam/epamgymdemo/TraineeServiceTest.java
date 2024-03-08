@@ -122,7 +122,7 @@ class TraineeServiceTest {
     }
 
     @Test
-    void testDeleteTrainee() {
+    void testDeleteTrainee() throws InstanceNotFoundException {
         when(traineeRepository.findById(traineeId)).thenReturn(Optional.ofNullable(trainee));
 
         traineeService.deleteById(traineeId);
@@ -167,6 +167,8 @@ class TraineeServiceTest {
     @Test
     void testDeleteByUsername() throws InstanceNotFoundException {
         when(userService.getByUsername(user.getUsername())).thenReturn(user);
+        when(traineeRepository.findAll()).thenReturn(List.of(trainee));
+        when(traineeRepository.findById(traineeId)).thenReturn(Optional.ofNullable(trainee));
 
         traineeService.deleteByUsername(user.getUsername());
 
@@ -219,4 +221,3 @@ class TraineeServiceTest {
         assertEquals(0, trainee.getTrainers().size());
     }
 }
-

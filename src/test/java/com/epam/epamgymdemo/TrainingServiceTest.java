@@ -115,4 +115,3 @@ class TrainingServiceTest {
         assertEquals(List.of(training), trainings);
     }
 }
-

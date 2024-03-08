@@ -24,12 +24,12 @@ public class UserService {
         String password = usernamePasswordGenerator.generatePassword();
 
         User user = User.builder()
-                        .firstName(firstName)
-                        .lastName(lastName)
-                        .isActive(isActive)
-                        .username(username)
-                        .password(password)
-                        .build();
+                .firstName(firstName)
+                .lastName(lastName)
+                .isActive(isActive)
+                .username(username)
+                .password(password)
+                .build();
 
         userRepository.save(user);
 
@@ -50,6 +50,13 @@ public class UserService {
         if (!userRepository.existsByUsername(username)) {
             throw new InstanceNotFoundException(String.format("User not found with the username: %s", username));
         } else return userRepository.findByUsername(username);
+    }
+
+    @Transactional
+    public void deleteById(Long id) {
+        userRepository.deleteById(id);
+
+        log.info(String.format("User with the id: %d has been successfully deleted", id));
     }
 
     @Transactional

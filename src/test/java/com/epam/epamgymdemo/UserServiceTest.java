@@ -134,4 +134,10 @@ public class UserServiceTest {
         assertFalse(user.getIsActive());
     }
 
+    @Test
+    void testDeleteById() {
+        userService.deleteById(1L);
+
+        verify(userRepository, times(1)).deleteById(1L);
+    }
 }

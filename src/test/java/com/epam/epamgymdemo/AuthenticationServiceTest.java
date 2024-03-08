@@ -71,4 +71,3 @@ public class AuthenticationServiceTest {
         assertNull(token);
     }
 }
-

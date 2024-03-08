@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.management.InstanceNotFoundException;
 import java.time.LocalDate;
@@ -25,8 +26,9 @@ public class TraineeService {
     private final TrainingRepository trainingRepository;
     private final UserService userService;
 
-    public void create(LocalDate birthday, String address,
-                       String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
+    @Transactional
+    public Trainee create(LocalDate birthday, String address,
+                          String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
         User user = userService.create(firstName, lastName, isActive);
 
         Trainee trainee = Trainee.builder()
@@ -38,8 +40,11 @@ public class TraineeService {
         traineeRepository.save(trainee);
 
         log.info(String.format("Trainee with the id: %d successfully created", trainee.getId()));
+
+        return trainee;
     }
 
+    @Transactional
     public void update(Long id, LocalDate birthday, String address, Long userId) throws InstanceNotFoundException {
         Trainee trainee = this.getById(id);
         if (birthday != null) {
@@ -65,23 +70,30 @@ public class TraineeService {
         return traineeRepository.findAll();
     }
 
-    public void deleteById(Long id) {
+    @Transactional
+    public void deleteById(Long id) throws InstanceNotFoundException {
+        Long userId = this.getById(id).getUser().getId();
+
+        userService.deleteById(userId);
         traineeRepository.deleteById(id);
+
         log.info(String.format("Trainee with the id: %d successfully deleted", id));
     }
 
+    @Transactional
     public void changePassword(Long id, String password) throws InstanceNotFoundException {
         var trainee = this.getById(id);
 
-        userService.changePassword(trainee.getId(), password);
+        userService.changePassword(trainee.getUser().getId(), password);
 
         log.info(String.format("Password for the trainee with the id: %d successfully changed", id));
     }
 
+    @Transactional
     public void changeIsActive(Long id, Boolean isActive) throws InstanceNotFoundException {
         var trainee = this.getById(id);
 
-        userService.changeIsActive(trainee.getId(), isActive);
+        userService.changeIsActive(trainee.getUser().getId(), isActive);
 
         log.info(String.format("Activity for the trainee with the id: %d successfully changed", id));
     }
@@ -98,8 +110,9 @@ public class TraineeService {
         } else return trainees.get(0);
     }
 
+    @Transactional
     public void deleteByUsername(String username) throws InstanceNotFoundException {
-        Long id = userService.getByUsername(username).getId();
+        Long id = this.getByUsername(username).getId();
 
         this.deleteById(id);
 
@@ -134,6 +147,7 @@ public class TraineeService {
         return trainerRepository.findAll().stream().filter(t -> !trainee.getTrainers().contains(t)).toList();
     }
 
+    @Transactional
     public void addTrainerToTrainersList(Long id, Trainer trainer) throws InstanceNotFoundException {
         Trainee trainee = this.getById(id);
 
@@ -143,6 +157,7 @@ public class TraineeService {
         log.info(String.format("Trainer with the id: %d has been added to the trainers list of trainee with the id: %d", trainer.getId(), id));
     }
 
+    @Transactional
     public void removeTrainerFromTrainersList(Long id, Trainer trainer) throws InstanceNotFoundException {
         Trainee trainee = this.getById(id);
 

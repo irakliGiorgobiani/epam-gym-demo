@@ -13,6 +13,6 @@ public class TrainingController {
     public ResponseEntity<String> addTraining(@RequestBody Map<String, String> requestBody,
                                               @RequestHeader(name = "username") String usernameAuth,
                                               @RequestHeader(name = "password") String password) {
-        
+        return null;
     }
 }

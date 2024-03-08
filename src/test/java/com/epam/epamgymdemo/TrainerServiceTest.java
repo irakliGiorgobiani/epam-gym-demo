@@ -1,15 +1,14 @@
 package com.epam.epamgymdemo;
 
-import com.epam.epamgymdemo.dao.TrainerDao;
-import com.epam.epamgymdemo.dao.TrainingDao;
-import com.epam.epamgymdemo.dao.TrainingTypeDao;
-import com.epam.epamgymdemo.dao.UserDao;
-import com.epam.epamgymdemo.generator.UsernamePasswordGenerator;
 import com.epam.epamgymdemo.model.Trainer;
 import com.epam.epamgymdemo.model.Training;
 import com.epam.epamgymdemo.model.TrainingType;
 import com.epam.epamgymdemo.model.User;
+import com.epam.epamgymdemo.repository.TrainerRepository;
+import com.epam.epamgymdemo.repository.TrainingRepository;
 import com.epam.epamgymdemo.service.TrainerService;
+import com.epam.epamgymdemo.service.TrainingTypeService;
+import com.epam.epamgymdemo.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -18,36 +17,28 @@ import org.mockito.MockitoAnnotations;
 
 import javax.management.InstanceNotFoundException;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 class TrainerServiceTest {
-
     @Mock
-    private TrainerDao trainerDao;
-
+    private TrainerRepository trainerRepository;
     @Mock
-    private UserDao userDao;
-
+    private UserService userService;
     @Mock
-    private TrainingTypeDao trainingTypeDao;
-
+    private TrainingTypeService trainingTypeService;
     @Mock
-    private TrainingDao trainingDao;
-
-    @Mock
-    private UsernamePasswordGenerator usernamePasswordGenerator;
-
+    private TrainingRepository trainingRepository;
     @InjectMocks
     private TrainerService trainerService;
-
     private Long trainerId;
     private Long typeId;
     private Long userId;
     private String firstName;
     private String lastName;
-    private Boolean isActive;
     private User user;
     private TrainingType trainingType;
     private Trainer trainer;
@@ -55,20 +46,19 @@ class TrainerServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        trainerService = new TrainerService(trainerDao, userDao, trainingTypeDao, trainingDao, usernamePasswordGenerator);
+        trainerService = new TrainerService(trainerRepository, trainingRepository, trainingTypeService, userService);
 
         trainerId = 1L;
         typeId = 1L;
         userId = 1L;
         firstName = "John";
         lastName = "Doe";
-        isActive = true;
 
         user = User.builder()
                 .id(userId)
                 .firstName(firstName)
                 .lastName(lastName)
-                .isActive(isActive)
+                .isActive(true)
                 .build();
 
         trainingType = TrainingType.builder()
@@ -85,37 +75,37 @@ class TrainerServiceTest {
 
     @Test
     void testCreateTrainer() throws InstanceNotFoundException {
-        when(usernamePasswordGenerator.generateUsername(firstName, lastName)).thenReturn("username");
-        when(usernamePasswordGenerator.generatePassword()).thenReturn("password");
-        when(trainingTypeDao.get(typeId)).thenReturn(trainingType);
+        when(userService.getById(userId)).thenReturn(user);
+        when(trainerRepository.findById(trainerId)).thenReturn(Optional.ofNullable(trainer));
+        when(trainingTypeService.getById(typeId)).thenReturn(trainingType);
 
-        trainerService.createTrainer(typeId, firstName, lastName, isActive);
+        trainerService.create(trainingType.getId(), firstName, lastName, true);
 
-        verify(userDao, times(1)).create(any(User.class));
-        verify(trainerDao, times(1)).create(any(Trainer.class));
+        assertEquals(userService.getById(userId), Objects.requireNonNull(trainerRepository.findById(trainerId).orElse(null)).getUser());
+        assertEquals(trainerId, Objects.requireNonNull(trainerRepository.findById(trainerId).orElse(null)).getId());
     }
 
     @Test
     void testUpdateTrainer() throws InstanceNotFoundException {
-        when(trainerDao.get(trainerId)).thenReturn(trainer);
+        when(trainerRepository.findById(trainerId)).thenReturn(Optional.ofNullable(trainer));
 
-        trainerService.updateTrainer(trainerId, typeId, userId);
+        trainerService.update(trainerId, typeId, userId);
 
-        verify(trainerDao, times(1)).update(any(Trainer.class));
+        verify(trainerRepository, times(1)).save(trainer);
     }
 
     @Test
     void testSelectTrainer() throws InstanceNotFoundException {
-        when(trainerDao.get(trainerId)).thenReturn(trainer);
+        when(trainerRepository.findById(trainerId)).thenReturn(Optional.ofNullable(trainer));
 
-        Trainer selectedTrainer = trainerService.selectTrainer(trainerId);
+        Trainer selectedTrainer = trainerService.getById(trainerId);
 
         assertEquals(trainer, selectedTrainer);
     }
 
     @Test
     void testSelectAllTrainers() {
-        when(trainerDao.getAll()).thenReturn(List.of(trainer));
+        when(trainerRepository.findAll()).thenReturn(List.of(trainer));
 
         List<Trainer> trainers = trainerService.selectAllTrainers();
 
@@ -126,30 +116,30 @@ class TrainerServiceTest {
     void testChangePassword() throws InstanceNotFoundException {
         String newPassword = "newPassword";
 
-        when(trainerDao.get(trainerId)).thenReturn(trainer);
-        when(userDao.get(userId)).thenReturn(user);
+        when(trainerRepository.findById(trainerId)).thenReturn(Optional.ofNullable(trainer));
+        when(userService.getById(userId)).thenReturn(user);
 
         trainerService.changePassword(trainerId, newPassword);
 
-        verify(userDao, times(1)).updatePassword(userId, newPassword);
+        verify(userService, times(1)).changePassword(userId, newPassword);
     }
 
     @Test
     void testChangeIsActive() throws InstanceNotFoundException {
         Boolean newIsActive = false;
 
-        when(trainerDao.get(trainerId)).thenReturn(trainer);
-        when(userDao.get(userId)).thenReturn(user);
+        when(trainerRepository.findById(trainerId)).thenReturn(Optional.ofNullable(trainer));
+        when(userService.getById(userId)).thenReturn(user);
 
         trainerService.changeIsActive(trainerId, newIsActive);
 
-        verify(userDao, times(1)).updateIsActive(userId, newIsActive);
+        verify(userService, times(1)).changeIsActive(userId, newIsActive);
     }
 
     @Test
     void testGetByUsername() throws InstanceNotFoundException {
-        when(userDao.getByUsername("username")).thenReturn(user);
-        when(trainerDao.getAll()).thenReturn(List.of(trainer));
+        when(userService.getByUsername("username")).thenReturn(user);
+        when(trainerRepository.findAll()).thenReturn(List.of(trainer));
 
         Trainer selectedTrainer = trainerService.getByUsername("username");
 
@@ -158,9 +148,9 @@ class TrainerServiceTest {
 
     @Test
     void testGetTrainingsByUsernameAndCriteria() throws InstanceNotFoundException {
-        when(userDao.getByUsername("username")).thenReturn(user);
-        when(trainerDao.getAll()).thenReturn(List.of(trainer));
-        when(trainingDao.getAll()).thenReturn(List.of());
+        when(userService.getByUsername("username")).thenReturn(user);
+        when(trainerRepository.findAll()).thenReturn(List.of(trainer));
+        when(trainingRepository.findAll()).thenReturn(List.of());
 
         List<Training> trainings = trainerService.getTrainingsByUsernameAndCriteria("username", null, null, null);
 

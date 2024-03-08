@@ -1,13 +1,11 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.dao.TrainerDao;
-import com.epam.epamgymdemo.dao.TrainingDao;
-import com.epam.epamgymdemo.dao.UserDao;
-import com.epam.epamgymdemo.generator.UsernamePasswordGenerator;
 import com.epam.epamgymdemo.model.*;
-import com.epam.epamgymdemo.dao.TraineeDao;
+import com.epam.epamgymdemo.repository.TraineeRepository;
+import com.epam.epamgymdemo.repository.TrainerRepository;
+import com.epam.epamgymdemo.repository.TrainingRepository;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
@@ -20,106 +18,81 @@ import java.util.stream.Stream;
 
 @Service
 @Slf4j
+@AllArgsConstructor
 public class TraineeService {
 
-    private final TraineeDao traineeDao;
-    private final UserDao userDao;
-    private final TrainingDao trainingDao;
-    private final TrainerDao trainerDao;
-    private final UsernamePasswordGenerator usernamePasswordGenerator;
+    private final TraineeRepository traineeRepository;
+    private final TrainerRepository trainerRepository;
+    private final TrainingRepository trainingRepository;
+    private final UserService userService;
 
-    public TraineeService(TraineeDao traineeDao, UserDao userDao, TrainingDao trainingDao, TrainerDao trainerDao,
-                          UsernamePasswordGenerator usernamePasswordGenerator) {
-        this.traineeDao = traineeDao;
-        this.userDao = userDao;
-        this.trainingDao =trainingDao;
-        this.trainerDao = trainerDao;
-        this.usernamePasswordGenerator = usernamePasswordGenerator;
-    }
-
-    static User userCreation(String firstName, String lastName, Boolean isActive, UsernamePasswordGenerator usernamePasswordGenerator, UserDao userDao, Logger log) {
-        String username = usernamePasswordGenerator.generateUsername(firstName, lastName);
-        String password = usernamePasswordGenerator.generatePassword();
-
-        User user = User.builder()
-                .firstName(firstName)
-                .lastName(lastName)
-                .userName(username)
-                .password(password)
-                .isActive(isActive)
-                .build();
-        userDao.create(user);
-
-        log.info(String.format("User with the id: %d successfully created", user.getId()));
-
-        return user;
-    }
-
-    public Trainee createTrainee(LocalDate dateOfBirth, String address,
-                              String firstName, String lastName, Boolean isActive) {
-        User user = userCreation(firstName, lastName, isActive, usernamePasswordGenerator, userDao, log);
+    public Trainee create(LocalDate birthday, String address,
+                          String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
+        User user = userService.create(firstName, lastName, isActive);
 
         Trainee trainee = Trainee.builder()
-                .dateOfBirth(dateOfBirth)
+                .birthday(birthday)
                 .address(address)
                 .user(user)
                 .trainers(new HashSet<>())
                 .build();
-        traineeDao.create(trainee);
+        traineeRepository.save(trainee);
 
         log.info(String.format("Trainee with the id: %d successfully created", trainee.getId()));
 
         return trainee;
     }
 
-    public void updateTrainee(Long id, LocalDate dateOfBirth, String address, Long userId) throws InstanceNotFoundException {
-        Trainee trainee = traineeDao.get(id);
-        if (dateOfBirth != null) {
-            trainee.setDateOfBirth(dateOfBirth);
+    public void update(Long id, LocalDate birthday, String address, Long userId) throws InstanceNotFoundException {
+        Trainee trainee = this.getById(id);
+        if (birthday != null) {
+            trainee.setBirthday(birthday);
         }
         if (address != null) {
             trainee.setAddress(address);
         }
         if (userId != null) {
-            trainee.setUser(userDao.get(userId));
+            trainee.setUser(userService.getById(userId));
         }
 
-        traineeDao.update(trainee);
+        traineeRepository.save(trainee);
 
         log.info(String.format("Trainee with the id: %d successfully updated", id));
     }
 
-    public Trainee selectTrainee(Long id) throws InstanceNotFoundException {
-        return traineeDao.get(id);
+    public Trainee getById(Long id) throws InstanceNotFoundException {
+        return traineeRepository.findById(id).orElseThrow(() -> new InstanceNotFoundException(String.format("Trainee not found with the id: %d", id)));
     }
 
-    public List<Trainee> selectAllTrainees() {
-        return traineeDao.getAll();
+    public List<Trainee> getAll() {
+        return traineeRepository.findAll();
     }
 
-    public void deleteTrainee(Long id) throws InstanceNotFoundException {
-        Trainee trainee = traineeDao.get(id);
-        userDao.delete(trainee.getUser().getId());
-        traineeDao.delete(id);
+    public void deleteById(Long id) {
+        traineeRepository.deleteById(id);
         log.info(String.format("Trainee with the id: %d successfully deleted", id));
     }
 
-    public void changePassword(Long traineeId, String password) throws InstanceNotFoundException {
-        var trainee = traineeDao.get(traineeId);
-        userDao.updatePassword(trainee.getUser().getId(), password);
-        log.info(String.format("Password for the trainee with the id: %d successfully changed", traineeId));
+    public void changePassword(Long id, String password) throws InstanceNotFoundException {
+        var trainee = this.getById(id);
+
+        userService.changePassword(trainee.getId(), password);
+
+        log.info(String.format("Password for the trainee with the id: %d successfully changed", id));
     }
 
-    public void changeIsActive(Long traineeId, Boolean isActive) throws InstanceNotFoundException {
-        var trainee = traineeDao.get(traineeId);
-        userDao.updateIsActive(trainee.getUser().getId(), isActive);
-        log.info(String.format("Activity for the trainee with the id: %d successfully changed", traineeId));
+    public void changeIsActive(Long id, Boolean isActive) throws InstanceNotFoundException {
+        var trainee = this.getById(id);
+
+        userService.changeIsActive(trainee.getId(), isActive);
+
+        log.info(String.format("Activity for the trainee with the id: %d successfully changed", id));
     }
 
     public Trainee getByUsername(String username) throws InstanceNotFoundException {
-        User user = userDao.getByUsername(username);
+        User user = userService.getByUsername(username);
 
-        List<Trainee> trainees = traineeDao.getAll().stream().filter(t -> t.getUser().equals(user)).toList();
+        List<Trainee> trainees = this.getAll().stream().filter(t -> t.getUser().equals(user)).toList();
 
         if (trainees.size() == 0) {
             throw new InstanceNotFoundException(String.format("Trainee not found with the username: %s", username));
@@ -129,9 +102,10 @@ public class TraineeService {
     }
 
     public void deleteByUsername(String username) throws InstanceNotFoundException {
-        Long id = userDao.getByUsername(username).getId();
+        Long id = userService.getByUsername(username).getId();
 
-        traineeDao.delete(id);
+        this.deleteById(id);
+
         log.info(String.format("Trainee with the username: %s successfully deleted", username));
     }
 
@@ -139,7 +113,7 @@ public class TraineeService {
                                                             String trainerName, TrainingType trainingType) throws InstanceNotFoundException {
         Trainee trainee = this.getByUsername(traineeUsername);
 
-        Stream<Training> trainingStream = trainingDao.getAll().stream().filter(t -> t.getTrainee().equals(trainee));
+        Stream<Training> trainingStream = trainingRepository.findAll().stream().filter(t -> t.getTrainee().equals(trainee));
 
         if (fromDate != null) {
             trainingStream = trainingStream.filter(t -> t.getTrainingDate().isEqual(fromDate) || t.getTrainingDate().isAfter(fromDate));
@@ -157,55 +131,57 @@ public class TraineeService {
         return trainingStream.toList();
     }
 
-    public List<Trainer> getTrainersUnassignedToTrainee(String username) throws InstanceNotFoundException {
+    public List<Trainer> getUnassignedTrainers(String username) throws InstanceNotFoundException {
         Trainee trainee = this.getByUsername(username);
 
-        return trainerDao.getAll().stream().filter(t -> !trainee.getTrainers().contains(t)).toList();
+        return trainerRepository.findAll().stream().filter(t -> !trainee.getTrainers().contains(t)).toList();
     }
 
     public Set<Trainer> getTraineeTrainersList(Long id) throws InstanceNotFoundException {
-        Trainee trainee = traineeDao.get(id);
+        Trainee trainee = this.getById(id);
 
         return trainee.getTrainers();
     }
 
-    public void addTrainerToTraineesTrainersList(Long id, Trainer trainer) throws InstanceNotFoundException {
-        Trainee trainee = traineeDao.get(id);
+    public void addTrainerToTrainersList(Long id, Trainer trainer) throws InstanceNotFoundException {
+        Trainee trainee = this.getById(id);
 
         trainee.getTrainers().add(trainer);
         trainer.getTrainees().add(trainee);
+
         log.info(String.format("Trainer with the id: %d has been added to the trainers list of trainee with the id: %d", trainer.getId(), id));
     }
 
-    public void removeTrainerFromTraineesTrainersList(Long id, Trainer trainer) throws InstanceNotFoundException {
-        Trainee trainee = traineeDao.get(id);
+    public void removeTrainerFromTrainersList(Long id, Trainer trainer) throws InstanceNotFoundException {
+        Trainee trainee = this.getById(id);
 
         trainee.getTrainers().remove(trainer);
         trainer.getTrainees().remove(trainee);
+
         log.info(String.format("Trainer with the id: %d has been removed from the trainers list of trainee with the id: %d", trainer.getId(), id));
     }
 
-    public void changeUsername(Long traineeId, String username) throws InstanceNotFoundException {
-        var trainee = traineeDao.get(traineeId);
+    public void changeUsername(Long id, String username) throws InstanceNotFoundException {
+        var trainee = this.getById(id);
 
-        userDao.updateUsername(trainee.getUser().getId(), username);
+        userService.changeUsername(trainee.getUser().getId(), username);
 
-        log.info(String.format("Username for the trainee with the id: %d successfully changed", traineeId));
+        log.info(String.format("Username for the trainee with the id: %d successfully changed", id));
     }
 
-    public void changeFirstName(Long traineeId, String firstName) throws InstanceNotFoundException {
-        var trainee = traineeDao.get(traineeId);
+    public void changeFirstName(Long id, String firstName) throws InstanceNotFoundException {
+        var trainee = this.getById(id);
 
-        userDao.updateFirstName(trainee.getUser().getId(), firstName);
+        userService.changeFirstName(trainee.getUser().getId(), firstName);
 
-        log.info(String.format("First name for the trainee with the id: %d successfully changed", traineeId));
+        log.info(String.format("First name for the trainee with the id: %d successfully changed", id));
     }
 
-    public void changeLastName(Long traineeId, String lastName) throws InstanceNotFoundException {
-        var trainee = traineeDao.get(traineeId);
+    public void changeLastName(Long id, String lastName) throws InstanceNotFoundException {
+        var trainee = this.getById(id);
 
-        userDao.updateLastName(trainee.getUser().getId(), lastName);
+        userService.changeLastName(trainee.getUser().getId(), lastName);
 
-        log.info(String.format("Last name for the trainee with the id: %d successfully changed", traineeId));
+        log.info(String.format("Last name for the trainee with the id: %d successfully changed", id));
     }
 }

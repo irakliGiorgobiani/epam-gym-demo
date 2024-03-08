@@ -7,6 +7,7 @@ import com.epam.epamgymdemo.model.User;
 import org.springframework.web.bind.annotation.*;
 
 import javax.management.InstanceNotFoundException;
+import javax.security.auth.login.CredentialNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -28,46 +29,49 @@ public class TrainerController {
 
         Trainer trainer = gymFacade.createTrainer(trainingType, firstName, lastName, true);
 
-        return Map.of("username", trainer.getUser().getUserName(),
+        return Map.of("username", trainer.getUser().getUsername(),
                 "password", trainer.getUser().getPassword());
     }
 
     @GetMapping("/{username}")
     public Map<String, Object> get(@PathVariable String username,
-                                   @RequestHeader(name = "username") String usernameAuth, @RequestHeader String password) throws InstanceNotFoundException {
-        Trainer trainer = gymFacade.selectTrainerByUsername(username, usernameAuth, password);
+                                   @RequestHeader(name = "username") String usernameAuth, @RequestHeader String password) throws InstanceNotFoundException, CredentialNotFoundException {
+        String token = gymFacade.authenticate(usernameAuth, password);
+        Trainer trainer = gymFacade.getTrainerByUsername(username, token);
         User user = trainer.getUser();
 
         return Map.of("firstName", user.getFirstName(), "lastName", user.getLastName(),
                 "specialization", trainer.getTrainingType().getId(), "isActive", user.getIsActive(),
                 "traineesList", trainer.getTrainees().stream()
-                        .map(t -> Map.of("username", t.getUser().getUserName(), "firstName", t.getUser().getFirstName(),
+                        .map(t -> Map.of("username", t.getUser().getUsername(), "firstName", t.getUser().getFirstName(),
                                 "lastName", t.getUser().getLastName()))
                         .toList());
     }
 
     @PutMapping("/update")
     public Map<String, Object> update(@RequestHeader(name = "username") String oldUsername, @RequestHeader String password,
-                                      @RequestBody Map<String, String> requestBody) throws InstanceNotFoundException {
+                                      @RequestBody Map<String, String> requestBody) throws InstanceNotFoundException, CredentialNotFoundException {
         String newUsername = requestBody.get("username");
         String firstName = requestBody.get("firstName");
         String lastName = requestBody.get("lastName");
         Long trainingType = Long.parseLong(requestBody.get("specialization"));
         Boolean isActive = Boolean.parseBoolean(requestBody.get("isActive"));
 
-        Trainer trainer = gymFacade.selectTrainerByUsername(oldUsername, oldUsername, password);
+        String token = gymFacade.authenticate(oldUsername, password);
+
+        Trainer trainer = gymFacade.getTrainerByUsername(oldUsername, token);
         User user = trainer.getUser();
 
-        gymFacade.updateTrainer(trainer.getId(), trainer.getTrainingType().getId(), user.getId(), oldUsername, password);
-        gymFacade.changeTrainersIsActive(trainer.getId(), isActive, oldUsername, password);
-        gymFacade.changeTrainersFirstName(trainer.getId(), firstName, oldUsername, password);
-        gymFacade.changeTrainersLastName(trainer.getId(), lastName, oldUsername, password);
-        gymFacade.changeTrainersUsername(trainer.getId(), newUsername, oldUsername, password);
+        gymFacade.updateTrainer(trainer.getId(), trainer.getTrainingType().getId(), user.getId(), token);
+        gymFacade.changeTrainersIsActive(trainer.getId(), isActive, token);
+        gymFacade.changeTrainersFirstName(trainer.getId(), firstName, token);
+        gymFacade.changeTrainersLastName(trainer.getId(), lastName, token);
+        gymFacade.changeTrainersUsername(trainer.getId(), newUsername, token);
 
-        return Map.of("username", user.getUserName(),"firstName", user.getFirstName(), "lastName", user.getLastName(),
+        return Map.of("username", user.getUsername(),"firstName", user.getFirstName(), "lastName", user.getLastName(),
                 "specialization", trainer.getTrainingType().getId(), "isActive", user.getIsActive(),
                 "traineesList", trainer.getTrainees().stream()
-                        .map(t -> Map.of("username", t.getUser().getUserName(), "firstName", t.getUser().getFirstName(),
+                        .map(t -> Map.of("username", t.getUser().getUsername(), "firstName", t.getUser().getFirstName(),
                                 "lastName", t.getUser().getLastName()))
                         .toList());
     }
@@ -78,7 +82,8 @@ public class TrainerController {
                                            @RequestParam(required = false) LocalDate toDate,
                                            @RequestParam(required = false) String traineeName,
                                            @RequestHeader(name = "username") String usernameAuth,
-                                           @RequestHeader(name = "password") String password) throws InstanceNotFoundException {
-        return gymFacade.selectTrainerTrainingsByUsernameAndCriteria(username, fromDate, toDate, traineeName, usernameAuth, password);
+                                           @RequestHeader(name = "password") String password) throws InstanceNotFoundException, CredentialNotFoundException {
+        String token = gymFacade.authenticate(usernameAuth, password);
+        return gymFacade.selectTrainerTrainingsByUsernameAndCriteria(username, fromDate, toDate, traineeName, token);
     }
 }

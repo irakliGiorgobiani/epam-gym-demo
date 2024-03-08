@@ -1,14 +1,14 @@
 package com.epam.epamgymdemo;
 
-import com.epam.epamgymdemo.dao.TraineeDao;
-import com.epam.epamgymdemo.dao.TrainerDao;
-import com.epam.epamgymdemo.dao.TrainingDao;
-import com.epam.epamgymdemo.dao.TrainingTypeDao;
 import com.epam.epamgymdemo.model.Trainee;
 import com.epam.epamgymdemo.model.Trainer;
 import com.epam.epamgymdemo.model.Training;
 import com.epam.epamgymdemo.model.TrainingType;
+import com.epam.epamgymdemo.repository.TrainingRepository;
+import com.epam.epamgymdemo.service.TraineeService;
+import com.epam.epamgymdemo.service.TrainerService;
 import com.epam.epamgymdemo.service.TrainingService;
+import com.epam.epamgymdemo.service.TrainingTypeService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -19,27 +19,22 @@ import javax.management.InstanceNotFoundException;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 class TrainingServiceTest {
-
     @Mock
-    private TrainingDao trainingDao;
-
+    private TrainingRepository trainingRepository;
     @Mock
-    private TraineeDao traineeDao;
-
+    private TraineeService traineeService;
     @Mock
-    private TrainerDao trainerDao;
-
+    private TrainerService trainerService;
     @Mock
-    private TrainingTypeDao trainingTypeDao;
-
+    private TrainingTypeService trainingTypeService;
     @InjectMocks
     private TrainingService trainingService;
-
     private Long trainingId;
     private String trainingName;
     private LocalDate trainingDate;
@@ -55,7 +50,7 @@ class TrainingServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        trainingService = new TrainingService(trainingDao, traineeDao, trainerDao, trainingTypeDao);
+        trainingService = new TrainingService(trainingRepository, trainerService, traineeService, trainingTypeService);
 
         trainingId = 1L;
         trainingName = "TrainingName";
@@ -72,6 +67,7 @@ class TrainingServiceTest {
 
         trainer = Trainer.builder()
                 .id(trainerId)
+                .trainees(new HashSet<>())
                 .build();
 
         trainingType = TrainingType.builder()
@@ -91,30 +87,30 @@ class TrainingServiceTest {
 
     @Test
     void testCreateTraining() throws InstanceNotFoundException {
-        when(traineeDao.get(traineeId)).thenReturn(trainee);
-        when(trainerDao.get(trainerId)).thenReturn(trainer);
-        when(trainingTypeDao.get(typeId)).thenReturn(trainingType);
+        when(traineeService.getById(traineeId)).thenReturn(trainee);
+        when(trainerService.getById(trainerId)).thenReturn(trainer);
+        when(trainingTypeService.getById(typeId)).thenReturn(trainingType);
 
-        trainingService.createTraining(trainingId, trainingName, trainingDate, trainingDuration, traineeId, trainerId, typeId);
+        trainingService.create(trainingName, trainingDate, trainingDuration, traineeId, trainerId, typeId);
 
-        verify(trainingDao, times(1)).create(any(Training.class));
+        verify(trainingRepository, times(1)).save(any(Training.class));
         assertEquals(1, trainee.getTrainers().size());
     }
 
     @Test
     void testSelectTraining() throws InstanceNotFoundException {
-        when(trainingDao.get(trainingId)).thenReturn(training);
+        when(trainingRepository.findById(trainingId)).thenReturn(Optional.ofNullable(training));
 
-        Training selectedTraining = trainingService.selectTraining(trainingId);
+        Training selectedTraining = trainingService.getById(trainingId);
 
         assertEquals(training, selectedTraining);
     }
 
     @Test
     void testSelectAllTrainings() {
-        when(trainingDao.getAll()).thenReturn(List.of(training));
+        when(trainingRepository.findAll()).thenReturn(List.of(training));
 
-        List<Training> trainings = trainingService.selectAllTrainings();
+        List<Training> trainings = trainingService.getAll();
 
         assertEquals(List.of(training), trainings);
     }

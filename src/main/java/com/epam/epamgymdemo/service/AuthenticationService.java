@@ -1,9 +1,10 @@
 package com.epam.epamgymdemo.service;
 
+import com.epam.epamgymdemo.repository.UserRepository;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.stereotype.Service;
 
-import javax.management.InstanceNotFoundException;
 import javax.security.auth.login.CredentialNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,16 +12,14 @@ import java.util.UUID;
 
 @Service
 @Getter
+@AllArgsConstructor
 public class AuthenticationService {
 
-    private final UserService userService;
+    private final UserRepository userRepository;
+
     private final Map<String, String> sessions = new HashMap<>();
 
-    public AuthenticationService(UserService userService) {
-        this.userService = userService;
-    }
-
-    public String authenticateUser(String username, String password) throws InstanceNotFoundException {
+    public String authenticateUser(String username, String password) {
         if (isValidUser(username, password)) {
             String token = generateToken();
             sessions.put(token, username);
@@ -29,8 +28,8 @@ public class AuthenticationService {
         return null;
     }
 
-    public boolean isValidUser(String username, String password) throws InstanceNotFoundException {
-        var user = userService.getByUsername(username);
+    public boolean isValidUser(String username, String password) {
+        var user = userRepository.findByUsername(username);
 
         return user != null && user.getPassword().equals(password);
     }

@@ -1,6 +1,7 @@
 package com.epam.epamgymdemo.controller;
 
 import com.epam.epamgymdemo.facade.GymFacade;
+import com.epam.epamgymdemo.model.Training;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.util.Map;
 @AllArgsConstructor
 @RequestMapping("/trainings")
 public class TrainingController {
+
     private final GymFacade gymFacade;
 
     @PostMapping("/add")
@@ -37,8 +39,8 @@ public class TrainingController {
         Long trainerId = gymFacade.getTrainerByUsername(trainerUsername, token).getId();
         Long typeId = gymFacade.getTrainingTypeByName(trainingTypeName, token).getId();
 
-        gymFacade.createTraining(trainingName, trainingDate, trainingDuration, traineeId, trainerId, typeId, token);
+        Training training = gymFacade.createTraining(trainingName, trainingDate, trainingDuration, traineeId, trainerId, typeId, token);
 
-        return ResponseEntity.ok("Training added successfully");
+        return ResponseEntity.ok(String.format("Training added successfully with the id: %d", training.getId()));
     }
 }

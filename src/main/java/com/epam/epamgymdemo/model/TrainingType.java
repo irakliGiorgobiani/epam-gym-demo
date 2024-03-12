@@ -21,9 +21,11 @@ import java.util.List;
 @Entity
 @Table(name = "training_type")
 public class TrainingType {
+
     @Id
     @Column(name = "id")
     private Long id;
+
     @Column(name = "type_name", nullable = false)
     private String typeName;
 

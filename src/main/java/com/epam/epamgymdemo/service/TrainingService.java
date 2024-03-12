@@ -18,17 +18,12 @@ import java.util.List;
 @Slf4j
 @AllArgsConstructor
 public class TrainingService {
+
     private final TrainingRepository trainingRepository;
-    private final TrainerService trainerService;
-    private final TraineeService traineeService;
-    private final TrainingTypeService trainingTypeService;
 
     @Transactional
-    public void create(String trainingName, LocalDate trainingDate, Number trainingDuration,
-                       Long traineeId, Long trainerId, Long typeId) throws InstanceNotFoundException {
-        Trainee trainee = traineeService.getById(traineeId);
-        Trainer trainer = trainerService.getById(trainerId);
-        TrainingType trainingType = trainingTypeService.getById(typeId);
+    public Training create(String trainingName, LocalDate trainingDate, Number trainingDuration,
+                       Trainee trainee, Trainer trainer, TrainingType trainingType) throws InstanceNotFoundException {
 
         Training training = Training.builder()
                 .trainingName(trainingName)
@@ -44,6 +39,8 @@ public class TrainingService {
 
         trainee.getTrainers().add(trainer);
         trainer.getTrainees().add(trainee);
+
+        return training;
     }
 
     public Training getById(Long id) throws InstanceNotFoundException {

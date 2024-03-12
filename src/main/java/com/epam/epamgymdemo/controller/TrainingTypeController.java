@@ -18,6 +18,7 @@ import java.util.Map;
 @AllArgsConstructor
 @RequestMapping("/trainingTypes")
 public class TrainingTypeController {
+
     private final GymFacade gymFacade;
 
     @GetMapping

@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.management.InstanceNotFoundException;
+import javax.naming.NamingException;
 import javax.security.auth.login.CredentialNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
@@ -17,10 +18,11 @@ import java.util.Set;
 @AllArgsConstructor
 @RequestMapping("/trainees")
 public class TraineeController {
+
     private final GymFacade gymFacade;
 
     @PostMapping("/register")
-    public Map<String, String> register(@RequestBody Map<String, String> requestBody) throws InstanceNotFoundException {
+    public Map<String, String> register(@RequestBody Map<String, String> requestBody) throws InstanceNotFoundException, NamingException {
         String firstName = requestBody.get("firstName");
         String lastName = requestBody.get("lastName");
         LocalDate birthday = LocalDate.parse(requestBody.get("birthday"));
@@ -72,7 +74,7 @@ public class TraineeController {
         User user = trainee.getUser();
 
         gymFacade.updateTrainee(id, birthday, address, user.getId(), token);
-        gymFacade.changeTraineesIsActive(id, isActive, token);
+        gymFacade.changeTraineesIsActive(id, token);
         gymFacade.changeTraineesFirstName(id, firstName, token);
         gymFacade.changeTraineesLastName(id, lastName, token);
         gymFacade.changeTraineesUsername(id, newUsername, token);
@@ -158,7 +160,7 @@ public class TraineeController {
 
         Long id = gymFacade.getTraineeByUsername(username, token).getId();
 
-        gymFacade.changeTraineesIsActive(id, isActive, token);
+        gymFacade.changeTraineesIsActive(id, token);
 
         return ResponseEntity.ok(String.format("isActive changed successfully for the trainee with the username: %s", username));
     }

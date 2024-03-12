@@ -12,6 +12,7 @@ import javax.security.auth.login.CredentialNotFoundException;
 @AllArgsConstructor
 @RequestMapping("/login")
 public class LoginController {
+
     private final GymFacade gymFacade;
 
     @GetMapping

@@ -25,14 +25,18 @@ import java.time.LocalDate;
 @Table(name = "training")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Training {
+
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(name = "training_name", nullable = false)
     private String trainingName;
+
     @Column(name = "training_date", nullable = false)
     private LocalDate trainingDate;
+
     @Column(name = "training_duration", nullable = false)
     private Number trainingDuration;
 

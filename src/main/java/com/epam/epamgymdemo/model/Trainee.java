@@ -37,6 +37,7 @@ import java.util.Set;
 @Table(name = "trainee")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Trainee {
+
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,15 +45,18 @@ public class Trainee {
 
     @Column(name = "birthday")
     private LocalDate birthday;
+
     @Column(name = "address")
     private String address;
+
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToMany(mappedBy = "trainee", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "trainee", cascade = CascadeType.REMOVE)
     @JsonBackReference
     private final List<Training> trainings = new ArrayList<>();
+
     @ManyToMany
     @JoinTable(
             name = "trainee_trainer",

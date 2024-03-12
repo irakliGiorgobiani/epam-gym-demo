@@ -9,17 +9,41 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.management.InstanceNotFoundException;
+import javax.naming.NameNotFoundException;
+import javax.naming.NamingException;
 import java.util.List;
 
 @Service
 @Slf4j
 @AllArgsConstructor
 public class UserService {
+
     private final UserRepository userRepository;
+
     private final UsernamePasswordGenerator usernamePasswordGenerator;
 
     @Transactional
-    public User create(String firstName, String lastName, Boolean isActive) {
+    public User create(String firstName, String lastName, Boolean isActive) throws NamingException {
+        if (firstName == null) {
+            throw new NameNotFoundException("The first name was not provided");
+        } else if (firstName.length() < 1 || firstName.length() > 50) {
+            throw new NamingException(String.format("the first name: %s is too short", firstName));
+        } else if (!firstName.matches("[a-zA-Z]+")) {
+            throw new NamingException(String.format("The first name: %s must only contain letters", firstName));
+        }
+
+        if (lastName == null) {
+            throw new NameNotFoundException("The last name was not provided");
+        } else if (lastName.length() < 1 || lastName.length() > 50) {
+            throw new NamingException(String.format("the last name: %s is too short", lastName));
+        } else if (!lastName.matches("[a-zA-Z]+")) {
+            throw new NamingException(String.format("The last name: %s must only contain letters", lastName));
+        }
+
+        if (isActive == null) {
+            isActive = false;
+        }
+
         String username = usernamePasswordGenerator.generateUsername(firstName, lastName);
         String password = usernamePasswordGenerator.generatePassword();
 
@@ -53,19 +77,23 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteById(Long id) {
-        userRepository.deleteById(id);
-
-        log.info(String.format("User with the id: %d has been successfully deleted", id));
-    }
-
-    @Transactional
     public void changeUsername(Long id, String username) throws InstanceNotFoundException {
         User user = this.getById(id);
 
         user.setUsername(username);
 
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void changePassword(Long id, String password) throws InstanceNotFoundException {
+        User user = this.getById(id);
+
+        user.setPassword(password);
+
+        userRepository.save(user);
+
+        log.info(String.format("Password changed successfully for the user with the id: %d", user.getId()));
     }
 
     @Transactional
@@ -87,21 +115,10 @@ public class UserService {
     }
 
     @Transactional
-    public void changePassword(Long id, String password) throws InstanceNotFoundException {
+    public void changeIsActive(Long id) throws InstanceNotFoundException {
         User user = this.getById(id);
 
-        user.setPassword(password);
-
-        userRepository.save(user);
-
-        log.info(String.format("Password changed successfully for the user with the id: %d", user.getId()));
-    }
-
-    @Transactional
-    public void changeIsActive(Long id, Boolean isActive) throws InstanceNotFoundException {
-        User user = this.getById(id);
-
-        user.setIsActive(isActive);
+        user.setIsActive(!user.getIsActive());
 
         userRepository.save(user);
 

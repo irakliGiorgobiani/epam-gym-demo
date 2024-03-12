@@ -13,6 +13,7 @@ import java.util.List;
 @Slf4j
 @AllArgsConstructor
 public class TrainingTypeService {
+
     private final TrainingTypeRepository trainingTypeRepository;
 
     public TrainingType getById(Long id) throws InstanceNotFoundException {

@@ -1,4 +1,4 @@
-package com.epam.epamgymdemo.model;
+package com.epam.epamgymdemo.model.bo;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;

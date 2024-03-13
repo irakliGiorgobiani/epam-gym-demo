@@ -1,9 +1,8 @@
 package com.epam.epamgymdemo.controller;
 
-import com.epam.epamgymdemo.facade.GymFacade;
-import com.epam.epamgymdemo.model.Trainer;
-import com.epam.epamgymdemo.model.Training;
-import com.epam.epamgymdemo.model.User;
+import com.epam.epamgymdemo.model.bo.Trainer;
+import com.epam.epamgymdemo.model.bo.Training;
+import com.epam.epamgymdemo.model.bo.User;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -67,7 +66,7 @@ public class TrainerController {
         gymFacade.updateTrainer(trainer.getId(), trainer.getTrainingType().getId(), user.getId(), token);
         gymFacade.changeTrainersIsActive(trainer.getId(), token);
         gymFacade.changeTrainersFirstName(trainer.getId(), firstName, token);
-        gymFacade.changeTrainersLastName(trainer.getId(), lastName, token);
+        gymFacade.changeTrainerLastName(trainer.getId(), lastName, token);
         gymFacade.changeTrainersUsername(trainer.getId(), newUsername, token);
 
         return Map.of("username", user.getUsername(),"firstName", user.getFirstName(), "lastName", user.getLastName(),

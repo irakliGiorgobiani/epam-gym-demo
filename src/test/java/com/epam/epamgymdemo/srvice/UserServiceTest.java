@@ -1,7 +1,7 @@
 package com.epam.epamgymdemo.srvice;
 
 import com.epam.epamgymdemo.generator.UsernamePasswordGenerator;
-import com.epam.epamgymdemo.model.User;
+import com.epam.epamgymdemo.model.bo.User;
 import com.epam.epamgymdemo.repository.UserRepository;
 import com.epam.epamgymdemo.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -136,7 +136,7 @@ public class UserServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        userService.changeIsActive(1L);
+        userService.toggleActivation(1L);
 
         assertFalse(user.getIsActive());
     }

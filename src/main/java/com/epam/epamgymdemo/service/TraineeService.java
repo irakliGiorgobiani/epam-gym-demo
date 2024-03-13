@@ -1,6 +1,12 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.model.*;
+
+import com.epam.epamgymdemo.model.bo.Trainee;
+import com.epam.epamgymdemo.model.bo.Trainer;
+import com.epam.epamgymdemo.model.bo.Training;
+import com.epam.epamgymdemo.model.bo.TrainingType;
+import com.epam.epamgymdemo.model.bo.User;
+import com.epam.epamgymdemo.model.dto.TraineeDto;
 import com.epam.epamgymdemo.repository.TraineeRepository;
 import com.epam.epamgymdemo.repository.TrainerRepository;
 import com.epam.epamgymdemo.repository.TrainingRepository;
@@ -31,12 +37,25 @@ public class TraineeService {
 
     private final UserRepository userRepository;
 
+    private TraineeDto createDto(Trainee trainee) {
+        TraineeDto traineeDto = TraineeDto.builder()
+                .id(trainee.getId())
+                .birthday(trainee.getBirthday())
+                .address(trainee.getAddress())
+                .userId(trainee.getUser().getId())
+                .build();
+
+        return traineeDto;
+    }
+
     @Transactional
-    public Trainee create(LocalDate birthday, String address, User user) throws InstanceNotFoundException {
+    public TraineeDto create(TraineeDto traineeDto) throws InstanceNotFoundException {
         Trainee trainee = Trainee.builder()
-                .birthday(birthday)
-                .address(address)
-                .user(user)
+                .birthday(traineeDto.getBirthday())
+                .address(traineeDto.getAddress())
+                .user(userRepository.findById(traineeDto.getUserId()).orElseThrow
+                        (() -> new InstanceNotFoundException
+                                (String.format("User not found with the id: %d", traineeDto.getUserId()))))
                 .trainers(new HashSet<>())
                 .build();
 
@@ -44,11 +63,11 @@ public class TraineeService {
 
         log.info(String.format("Trainee with the id: %d successfully created", trainee.getId()));
 
-        return trainee;
+        return createDto(trainee);
     }
 
     @Transactional
-    public void update(Long id, LocalDate birthday, String address, Long userId) throws InstanceNotFoundException {
+    public void update(TraineeDto updatedTraineeDto) throws InstanceNotFoundException {
         Trainee trainee = this.getById(id);
         if (birthday != null) {
             trainee.setBirthday(birthday);

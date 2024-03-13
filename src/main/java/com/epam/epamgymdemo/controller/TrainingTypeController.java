@@ -1,7 +1,6 @@
 package com.epam.epamgymdemo.controller;
 
-import com.epam.epamgymdemo.facade.GymFacade;
-import com.epam.epamgymdemo.model.TrainingType;
+import com.epam.epamgymdemo.model.bo.TrainingType;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;

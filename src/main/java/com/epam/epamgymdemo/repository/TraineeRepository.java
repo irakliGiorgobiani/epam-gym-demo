@@ -1,6 +1,6 @@
 package com.epam.epamgymdemo.repository;
 
-import com.epam.epamgymdemo.model.Trainee;
+import com.epam.epamgymdemo.model.bo.Trainee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 @Repository

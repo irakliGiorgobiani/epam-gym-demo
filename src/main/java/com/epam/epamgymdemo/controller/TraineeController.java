@@ -1,7 +1,8 @@
 package com.epam.epamgymdemo.controller;
 
-import com.epam.epamgymdemo.facade.GymFacade;
-import com.epam.epamgymdemo.model.*;
+
+import com.epam.epamgymdemo.model.bo.*;
+import com.epam.epamgymdemo.service.TraineeService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +17,10 @@ import java.util.Set;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/trainees")
+@RequestMapping("/trainee")
 public class TraineeController {
 
-    private final GymFacade gymFacade;
+    private final TraineeService traineeService;
 
     @PostMapping("/register")
     public Map<String, String> register(@RequestBody Map<String, String> requestBody) throws InstanceNotFoundException, NamingException {
@@ -51,9 +52,9 @@ public class TraineeController {
                         .toList());
     }
 
-    @PutMapping("/update")
+    @PutMapping("/update/{id}")
     public Map<String, Object> update(@RequestHeader(name = "username") String oldUsername, @RequestHeader(name = "password") String password,
-                                      @RequestBody Map<String, String> requestBody) throws InstanceNotFoundException, CredentialNotFoundException {
+                                      @RequestBody Map<String, String> requestBody, @PathVariable Long id) throws InstanceNotFoundException, CredentialNotFoundException {
         String token = gymFacade.authenticate(oldUsername, password);
 
         String newUsername = requestBody.get("username");
@@ -69,7 +70,7 @@ public class TraineeController {
         }
         Boolean isActive = Boolean.parseBoolean(requestBody.get("isActive"));
 
-        Trainee trainee = gymFacade.getTraineeByUsername(oldUsername, token);
+        Trainee trainee = gymFacade.getTraineeById(id, token);
         Long id = trainee.getId();
         User user = trainee.getUser();
 

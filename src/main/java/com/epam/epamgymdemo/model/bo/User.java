@@ -1,4 +1,4 @@
-package com.epam.epamgymdemo.model;
+package com.epam.epamgymdemo.model.bo;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

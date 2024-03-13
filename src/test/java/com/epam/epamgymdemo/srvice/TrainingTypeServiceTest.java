@@ -1,6 +1,6 @@
 package com.epam.epamgymdemo.srvice;
 
-import com.epam.epamgymdemo.model.TrainingType;
+import com.epam.epamgymdemo.model.bo.TrainingType;
 import com.epam.epamgymdemo.repository.TrainingTypeRepository;
 import com.epam.epamgymdemo.service.TrainingTypeService;
 import org.junit.jupiter.api.Test;

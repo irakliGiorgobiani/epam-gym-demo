@@ -1,6 +1,6 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.model.TrainingType;
+import com.epam.epamgymdemo.model.bo.TrainingType;
 import com.epam.epamgymdemo.repository.TrainingTypeRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

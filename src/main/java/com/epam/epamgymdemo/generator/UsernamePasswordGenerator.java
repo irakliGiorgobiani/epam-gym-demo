@@ -1,6 +1,6 @@
 package com.epam.epamgymdemo.generator;
 
-import com.epam.epamgymdemo.model.User;
+import com.epam.epamgymdemo.model.bo.User;
 import com.epam.epamgymdemo.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;

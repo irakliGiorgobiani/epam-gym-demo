@@ -1,6 +1,6 @@
 package com.epam.epamgymdemo.srvice;
 
-import com.epam.epamgymdemo.model.User;
+import com.epam.epamgymdemo.model.bo.User;
 import com.epam.epamgymdemo.repository.UserRepository;
 import com.epam.epamgymdemo.service.AuthenticationService;
 import org.junit.jupiter.api.Test;

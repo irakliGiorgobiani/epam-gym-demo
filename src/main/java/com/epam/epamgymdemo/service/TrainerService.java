@@ -1,9 +1,9 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.model.User;
-import com.epam.epamgymdemo.model.TrainingType;
-import com.epam.epamgymdemo.model.Trainer;
-import com.epam.epamgymdemo.model.Training;
+import com.epam.epamgymdemo.model.bo.User;
+import com.epam.epamgymdemo.model.bo.TrainingType;
+import com.epam.epamgymdemo.model.bo.Trainer;
+import com.epam.epamgymdemo.model.bo.Training;
 import com.epam.epamgymdemo.repository.TrainerRepository;
 import com.epam.epamgymdemo.repository.TrainingRepository;
 import com.epam.epamgymdemo.repository.TrainingTypeRepository;

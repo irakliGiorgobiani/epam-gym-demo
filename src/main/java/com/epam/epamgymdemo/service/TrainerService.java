@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.management.InstanceNotFoundException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -81,6 +82,16 @@ public class TrainerService {
         } else if (trainers.size() > 1) {
             throw new DuplicateKeyException(String.format("Multiple trainers found with the username : %s", username));
         } else return trainers.get(0);
+    }
+
+    public List<Trainer> getByUsernames(List<String> usernames) throws InstanceNotFoundException {
+        List<Trainer> trainers = new ArrayList<>();
+
+        for (String username : usernames) {
+            trainers.add(this.getByUsername(username));
+        }
+
+        return trainers;
     }
 
     public Long getUserId(Long id) throws InstanceNotFoundException {

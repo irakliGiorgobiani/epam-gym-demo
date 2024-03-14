@@ -7,7 +7,6 @@ import com.epam.epamgymdemo.model.dto.UserDto;
 import com.epam.epamgymdemo.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.env.MissingRequiredPropertiesException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +15,7 @@ import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.MissingResourceException;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -30,11 +29,11 @@ public class UserService {
 
     private UserDto createDto(User user) {
         return UserDto.builder()
-                .id(user.getId())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .username(user.getUsername())
                 .isActive(user.getIsActive())
+                .password(user.getPassword())
                 .build();
     }
 
@@ -57,15 +56,11 @@ public class UserService {
                     (String.format("The last name: %s must only contain letters", userDto.getLastName()));
         }
 
-        if (userDto.getIsActive() == null) {
-            throw new MissingPropertyException("The isActive field value is missing");
-        }
-
         return userDto;
     }
 
     @Transactional
-    public UserDto create(UserDto createdUserDto) throws NamingException {
+    public User create(UserDto createdUserDto) throws NamingException {
         UserDto userDto = validateFields(createdUserDto);
 
         userDto.setUsername(usernamePasswordGenerator.generateUsername(userDto.getFirstName(), userDto.getLastName()));
@@ -74,7 +69,7 @@ public class UserService {
         User user = User.builder()
                         .firstName(userDto.getFirstName())
                         .lastName(userDto.getLastName())
-                        .isActive(userDto.getIsActive())
+                        .isActive(true)
                         .username(userDto.getUsername())
                         .password(userDto.getPassword())
                         .build();
@@ -83,14 +78,22 @@ public class UserService {
 
         log.info(String.format("User with the id: %d successfully created", user.getId()));
 
-        return userDto;
+        return user;
+    }
+
+    public Map<String, String> usernameAndPassword(User user) {
+        return Map.of("username", user.getUsername(), "password", user.getPassword());
     }
 
     @Transactional
-    public void update(UserDto updatedUserDto) throws InstanceNotFoundException, NamingException {
+    public void update(String username, UserDto updatedUserDto) throws InstanceNotFoundException, NamingException {
         UserDto userDto = validateFields(updatedUserDto);
 
-        User user = this.getById(userDto.getId());
+        if (userDto.getIsActive() == null) {
+            throw new MissingPropertyException("The isActive field was not provided");
+        }
+
+        User user = this.getByUsername(username);
 
         user.setFirstName(userDto.getFirstName());
         user.setLastName(userDto.getLastName());
@@ -116,25 +119,21 @@ public class UserService {
         return userDtoList;
     }
 
-    public UserDto getByUsername(String username) throws InstanceNotFoundException {
-        User user = Optional.of(userRepository.findByUsername(username))
+    public User getByUsername(String username) throws InstanceNotFoundException {
+        return Optional.of(userRepository.findByUsername(username))
                 .orElseThrow(() -> new InstanceNotFoundException
                         (String.format("User not found with the username: %s", username)));
-
-        return createDto(user);
     }
 
     @Transactional
-    public UserDto changePassword(Long id, String password) throws InstanceNotFoundException {
-        User user = this.getById(id);
+    public void changePassword(String username, String password) throws InstanceNotFoundException {
+        User user = this.getByUsername(username);
 
         user.setPassword(password);
 
         userRepository.save(user);
 
         log.info(String.format("Password changed successfully for the user with the id: %d", user.getId()));
-
-        return createDto(user);
     }
 
     @Transactional
@@ -148,5 +147,14 @@ public class UserService {
         log.info(String.format("IsActive changed successfully for the user with the id: %d", user.getId()));
 
         return createDto(user);
+    }
+
+    @Transactional
+    public Map<String, Object> changeActive(String username, Boolean isActive) throws InstanceNotFoundException {
+        User user = this.getByUsername(username);
+
+        user.setIsActive(isActive);
+
+        return Map.of("isActive", user.getIsActive());
     }
 }

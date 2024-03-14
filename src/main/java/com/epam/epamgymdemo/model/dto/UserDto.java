@@ -1,5 +1,6 @@
 package com.epam.epamgymdemo.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 
@@ -7,10 +8,10 @@ import lombok.Data;
 @Builder
 public class UserDto {
 
-    private Long id;
-
+    @JsonProperty(required = true)
     private String firstName;
 
+    @JsonProperty(required = true)
     private String lastName;
 
     private String username;

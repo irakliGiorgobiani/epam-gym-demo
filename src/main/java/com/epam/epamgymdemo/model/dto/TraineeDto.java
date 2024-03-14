@@ -11,17 +11,9 @@ import java.util.Set;
 
 @Data
 @Builder
-public class TraineeDto {
-
-    private Long id;
+public class TraineeDto extends UserDto {
 
     private LocalDate birthday;
 
     private String address;
-
-    private Long userId;
-
-    private final List<TrainingDto> trainings = new ArrayList<>();
-
-    private Set<TrainerDto> trainers;
 }

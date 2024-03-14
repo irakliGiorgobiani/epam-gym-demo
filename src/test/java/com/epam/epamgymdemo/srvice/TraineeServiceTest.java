@@ -151,7 +151,7 @@ class TraineeServiceTest {
         when(trainerRepository.findAll()).thenReturn(List.of(trainer1, trainer2));
         trainee.getTrainers().add(trainer1);
 
-        List<Trainer> trainersUnassignedToTrainee = traineeService.getUnassignedTrainers(user.getUsername());
+        List<Trainer> trainersUnassignedToTrainee = traineeService.getUnassignedActiveTrainers(user.getUsername());
 
         assertEquals(trainer2, trainersUnassignedToTrainee.get(0));
         assertEquals(1, trainersUnassignedToTrainee.size());

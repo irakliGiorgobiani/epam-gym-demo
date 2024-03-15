@@ -1,24 +1,19 @@
 package com.epam.epamgymdemo.model.dto;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
-@Builder
-public class TrainerDto {
+public class TrainerDto extends UserDto {
 
-    private Long id;
-
-    private TrainingTypeDto trainingType;
-
-    private UserDto user;
-
-    private final List<TrainingDto> trainings = new ArrayList<>();
-
-    private Set<TraineeDto> trainees;
+    @JsonProperty(required = true)
+    private Long specializationId;
 }

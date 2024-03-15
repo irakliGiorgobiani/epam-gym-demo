@@ -1,22 +1,21 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.exception.MissingPropertyException;
+import com.epam.epamgymdemo.exception.MissingFieldException;
+import com.epam.epamgymdemo.exception.MissingInstanceException;
+import com.epam.epamgymdemo.exception.NamingException;
 import com.epam.epamgymdemo.generator.UsernamePasswordGenerator;
 import com.epam.epamgymdemo.model.bo.User;
+import com.epam.epamgymdemo.model.dto.ActiveDto;
 import com.epam.epamgymdemo.model.dto.UserDto;
+import com.epam.epamgymdemo.model.dto.UsernamePasswordDto;
 import com.epam.epamgymdemo.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.management.InstanceNotFoundException;
-import javax.naming.NameNotFoundException;
-import javax.naming.NamingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -27,20 +26,19 @@ public class UserService {
 
     private final UsernamePasswordGenerator usernamePasswordGenerator;
 
-    private UserDto createDto(User user) {
+    private UserDto createUserDto(User user) {
         return UserDto.builder()
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .username(user.getUsername())
                 .isActive(user.getIsActive())
-                .password(user.getPassword())
                 .build();
     }
 
-    private UserDto validateFields(UserDto userDto) throws NamingException {
+    private UserDto validateFields(UserDto userDto) {
         if (userDto.getFirstName() == null) {
-            throw new NameNotFoundException("The first name was not provided");
-        } else if (userDto.getFirstName().length() < 1 || userDto.getFirstName().length() > 50) {
+            throw new MissingFieldException("The first name was not provided");
+        } else if (userDto.getFirstName().length() < 2 || userDto.getFirstName().length() > 50) {
             throw new NamingException(String.format("the first name: %s is too short", userDto.getFirstName()));
         } else if (!userDto.getFirstName().matches("[a-zA-Z]+")) {
             throw new NamingException
@@ -48,8 +46,8 @@ public class UserService {
         }
 
         if (userDto.getLastName() == null) {
-            throw new NameNotFoundException("The last name was not provided");
-        } else if (userDto.getLastName().length() < 1 || userDto.getLastName().length() > 50) {
+            throw new MissingFieldException("The last name was not provided");
+        } else if (userDto.getLastName().length() < 2 || userDto.getLastName().length() > 50) {
             throw new NamingException(String.format("the last name: %s is too short", userDto.getLastName()));
         } else if (!userDto.getLastName().matches("[a-zA-Z]+")) {
             throw new NamingException
@@ -59,19 +57,21 @@ public class UserService {
         return userDto;
     }
 
-    @Transactional
-    public User create(UserDto createdUserDto) throws NamingException {
-        UserDto userDto = validateFields(createdUserDto);
+    public UsernamePasswordDto usernameAndPassword(User user) {
+        return UsernamePasswordDto.builder().username(user.getUsername()).password(user.getPassword()).build();
+    }
 
-        userDto.setUsername(usernamePasswordGenerator.generateUsername(userDto.getFirstName(), userDto.getLastName()));
-        userDto.setPassword(usernamePasswordGenerator.generatePassword());
+    @Transactional
+    public User create(UserDto createdUserDto) {
+        UserDto userDto = validateFields(createdUserDto);
 
         User user = User.builder()
                         .firstName(userDto.getFirstName())
                         .lastName(userDto.getLastName())
                         .isActive(true)
-                        .username(userDto.getUsername())
-                        .password(userDto.getPassword())
+                        .username(usernamePasswordGenerator.generateUsername
+                                (userDto.getFirstName(), userDto.getLastName()))
+                        .password(usernamePasswordGenerator.generatePassword())
                         .build();
 
         userRepository.save(user);
@@ -81,16 +81,12 @@ public class UserService {
         return user;
     }
 
-    public Map<String, String> usernameAndPassword(User user) {
-        return Map.of("username", user.getUsername(), "password", user.getPassword());
-    }
-
     @Transactional
-    public void update(String username, UserDto updatedUserDto) throws InstanceNotFoundException, NamingException {
+    public void update(String username, UserDto updatedUserDto) {
         UserDto userDto = validateFields(updatedUserDto);
 
         if (userDto.getIsActive() == null) {
-            throw new MissingPropertyException("The isActive field was not provided");
+            throw new MissingFieldException("The isActive field was not provided");
         }
 
         User user = this.getByUsername(username);
@@ -104,29 +100,24 @@ public class UserService {
         log.info(String.format("The user with the id: %d has been successfully updated", user.getId()));
     }
 
-    public User getById(Long id) throws InstanceNotFoundException {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new InstanceNotFoundException(String.format("User not found with the id: %d", id)));
+    public User getByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new MissingInstanceException
+                        (String.format("User not found with the username: %s", username)));
     }
 
     public List<UserDto> getAll() {
         List<UserDto> userDtoList = new ArrayList<>();
 
         for (User user : userRepository.findAll()) {
-            userDtoList.add(createDto(user));
+            userDtoList.add(createUserDto(user));
         }
 
         return userDtoList;
     }
 
-    public User getByUsername(String username) throws InstanceNotFoundException {
-        return Optional.of(userRepository.findByUsername(username))
-                .orElseThrow(() -> new InstanceNotFoundException
-                        (String.format("User not found with the username: %s", username)));
-    }
-
     @Transactional
-    public void changePassword(String username, String password) throws InstanceNotFoundException {
+    public void changePassword(String username, String password) {
         User user = this.getByUsername(username);
 
         user.setPassword(password);
@@ -137,24 +128,11 @@ public class UserService {
     }
 
     @Transactional
-    public UserDto toggleActivation(Long id) throws InstanceNotFoundException {
-        User user = this.getById(id);
-
-        user.setIsActive(!user.getIsActive());
-
-        userRepository.save(user);
-
-        log.info(String.format("IsActive changed successfully for the user with the id: %d", user.getId()));
-
-        return createDto(user);
-    }
-
-    @Transactional
-    public Map<String, Object> changeActive(String username, Boolean isActive) throws InstanceNotFoundException {
+    public ActiveDto changeActive(String username, Boolean isActive) {
         User user = this.getByUsername(username);
 
         user.setIsActive(isActive);
 
-        return Map.of("isActive", user.getIsActive());
+        return ActiveDto.builder().isActive(user.getIsActive()).build();
     }
 }

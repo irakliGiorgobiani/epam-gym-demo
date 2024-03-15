@@ -1,26 +1,28 @@
 package com.epam.epamgymdemo.service;
 
-
+import com.epam.epamgymdemo.exception.MissingInstanceException;
 import com.epam.epamgymdemo.model.bo.Trainee;
 import com.epam.epamgymdemo.model.bo.Trainer;
 import com.epam.epamgymdemo.model.bo.Training;
 import com.epam.epamgymdemo.model.bo.TrainingType;
 import com.epam.epamgymdemo.model.bo.User;
 import com.epam.epamgymdemo.model.dto.TraineeDto;
-import com.epam.epamgymdemo.model.dto.TraineeTrainingListDto;
+import com.epam.epamgymdemo.model.dto.TrainerDto;
+import com.epam.epamgymdemo.model.dto.TraineeTrainingDto;
+import com.epam.epamgymdemo.model.dto.UserDto;
 import com.epam.epamgymdemo.repository.TraineeRepository;
-import com.epam.epamgymdemo.repository.TrainerRepository;
 import com.epam.epamgymdemo.repository.TrainingRepository;
 import com.epam.epamgymdemo.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.management.InstanceNotFoundException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -30,27 +32,30 @@ public class TraineeService {
 
     private final TraineeRepository traineeRepository;
 
-    private final TrainerRepository trainerRepository;
-
     private final TrainingRepository trainingRepository;
 
     private final UserRepository userRepository;
 
-    private TraineeDto createDto(Trainee trainee) {
+    private TraineeDto createTraineeDto(Trainee trainee) {
         return TraineeDto.builder()
+                .firstName(trainee.getUser().getFirstName())
+                .lastName(trainee.getUser().getLastName())
+                .username(trainee.getUser().getUsername())
                 .birthday(trainee.getBirthday())
                 .address(trainee.getAddress())
+                .isActive(trainee.getUser().getIsActive())
+                .trainers(this.getTrainerList(trainee.getUser().getUsername()))
                 .build();
     }
 
     @Transactional
-    public void create(Long userId, TraineeDto traineeDto) throws InstanceNotFoundException {
+    public void create(Long userId, TraineeDto traineeDto) {
         Trainee trainee = Trainee.builder()
                 .birthday(traineeDto.getBirthday())
                 .address(traineeDto.getAddress())
                 .user(userRepository.findById(userId)
-                        .orElseThrow(() -> new InstanceNotFoundException
-                                (String.format("User not found with the id: %d", userId))))
+                        .orElseThrow(() -> new MissingInstanceException(
+                                (String.format("User not found with the id: %d", userId)))))
                 .build();
 
         traineeRepository.save(trainee);
@@ -59,8 +64,9 @@ public class TraineeService {
     }
 
     @Transactional
-    public Map<String, Object> update(String username, TraineeDto updatedTraineeDto) throws InstanceNotFoundException {
+    public TraineeDto update(String username, TraineeDto updatedTraineeDto) {
         Trainee trainee = this.getByUsername(username);
+
         if (updatedTraineeDto.getBirthday() != null) {
             trainee.setBirthday(updatedTraineeDto.getBirthday());
         }
@@ -72,85 +78,45 @@ public class TraineeService {
 
         log.info(String.format("Trainee with the id: %d successfully updated", trainee.getId()));
 
-        User user = trainee.getUser();
-
-        return Map.of("username", user.getUsername(),
-                "firstName", user.getFirstName(),
-                "lastName", user.getLastName(),
-                "birthday", trainee.getBirthday(),
-                "address", trainee.getAddress(),
-                "isActive", user.getIsActive(),
-                "trainersList", this.getTraineeTrainersList(trainee.getId()).stream()
-                        .map(t -> Map.of("username", t.getUser().getUsername(),
-                                "firstName", t.getUser().getFirstName(),
-                                "lastName", t.getUser().getLastName(),
-                                "specialization", t.getTrainingType().getId()))
-                        .toList());
+        return createTraineeDto(trainee);
     }
 
-    public Map<String, Object> get(String username) throws InstanceNotFoundException {
+    public TraineeDto get(String username) {
         Trainee trainee = this.getByUsername(username);
-        User user = trainee.getUser();
 
-        return Map.of("firstName", user.getFirstName(), "lastName", user.getLastName(),
-                "dateOfBirth", trainee.getBirthday(), "address", trainee.getAddress(),
-                "isActive", user.getIsActive(), "trainersList", trainee.getTrainers().stream()
-                        .map(t -> Map.of("username", t.getUser().getUsername(), "firstName", t.getUser().getFirstName(),
-                                "lastName", t.getUser().getLastName(), "specialization", t.getTrainingType().getId()))
-                        .toList());
+        return createTraineeDto(trainee);
     }
 
-    public Trainee getById(Long id) throws InstanceNotFoundException {
-        return traineeRepository.findById(id)
-                .orElseThrow(() -> new InstanceNotFoundException
-                        (String.format("Trainee not found with the id: %d", id)));
-    }
+    public Trainee getByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new MissingInstanceException
+                        (String.format("Trainee not found with the username: %s", username)));
 
-    public Trainee getByUsername(String username) throws InstanceNotFoundException {
-        User user = userRepository.findByUsername(username);
-
-        List<Trainee> trainees = this.getAll().stream().filter(t -> t.getUser().equals(user)).toList();
-
-        if (trainees.size() == 0) {
-            throw new InstanceNotFoundException(String.format("Trainee not found with the username: %s", username));
-        } else if (trainees.size() > 1) {
-            throw new DuplicateKeyException(String.format("Multiple trainees found with the username : %s", username));
-        } else return trainees.get(0);
+        return user.getTrainee();
     }
 
     public List<Trainee> getAll() {
         return traineeRepository.findAll();
     }
 
-    public Long getUserId(Long id) throws InstanceNotFoundException {
-        return this.getById(id).getUser().getId();
-    }
-
     @Transactional
-    public TraineeDto deleteById(Long id) throws InstanceNotFoundException {
-        Trainee trainee = this.getById(id);
+    public TraineeDto deleteByUsername(String username) {
+        Trainee trainee = this.getByUsername(username);
+        TraineeDto traineeDto = createTraineeDto(trainee);
 
-        userRepository.deleteById(this.getById(id).getUser().getId());
-        traineeRepository.deleteById(id);
-
-        log.info(String.format("Trainee with the id: %d successfully deleted", id));
-
-        return createDto(trainee);
-    }
-
-    @Transactional
-    public TraineeDto deleteByUsername(String username) throws InstanceNotFoundException {
-        TraineeDto traineeDto = this.deleteById(this.getByUsername(username).getId());
+        userRepository.deleteById(trainee.getUser().getId());
+        traineeRepository.deleteById(trainee.getId());
 
         log.info(String.format("Trainee with the username: %s successfully deleted", username));
 
         return traineeDto;
     }
 
-    public List<TraineeTrainingListDto> getTrainingsByUsernameAndCriteria(String traineeUsername, LocalDate fromDate,
-                                                                          LocalDate toDate,
-                                                                          String trainerName, TrainingType trainingType)
-            throws InstanceNotFoundException {
+    public List<TraineeTrainingDto> getTrainingsByUsernameAndCriteria(String traineeUsername,
+                                                                      LocalDate fromDate,
+                                                                      LocalDate toDate,
+                                                                      String trainerName,
+                                                                      TrainingType trainingType) {
         Trainee trainee = this.getByUsername(traineeUsername);
 
         Stream<Training> trainingStream = trainingRepository.findAll().stream()
@@ -174,51 +140,42 @@ public class TraineeService {
 
         List<Training> trainings = trainingStream.toList();
 
-        List<TraineeTrainingListDto> trainerListDtos = new ArrayList<>();
+        List<TraineeTrainingDto> traineeTrainingDtoList = new ArrayList<>();
 
         for (Training training : trainings) {
-            trainerListDtos.add(TraineeTrainingListDto.builder()
+            traineeTrainingDtoList.add(TraineeTrainingDto.builder()
                     .trainingName(training.getTrainingName())
                     .trainingDate(training.getTrainingDate())
                     .trainingDuration(training.getTrainingDuration())
-                    .typeName(training.getTrainingType().getTypeName())
-                    .trainerName(training.getTrainer().getUser().getFirstName())
+                    .trainingType(training.getTrainingType().getTypeName())
+                    .trainerName(training.getTrainer().getUser().getFirstName() + " "
+                            + training.getTrainer().getUser().getLastName())
                     .build());
         }
 
-        return trainerListDtos;
+        return traineeTrainingDtoList;
     }
 
-    private Map<Long, Map<String, Object>> getTrainerList(List<Trainer> trainers) {
-        Map<Long, Map<String, Object>> result = new HashMap<>();
-
-        for (Trainer trainer : trainers) {
-            result.put(trainer.getId(), Map.of("username", trainer.getUser().getUsername(),
-                    "firstName", trainer.getUser().getFirstName(),
-                    "lastName", trainer.getUser().getLastName(),
-                    "specialization", trainer.getTrainingType().getId()));
-        }
-
-        return result;
+    public Set<TrainerDto> getUnassignedActiveTrainers(String username) {
+        return getTrainerList(username).stream().filter(UserDto::getIsActive).collect(Collectors.toSet());
     }
 
-    public Map<Long, Map<String, Object>> getUnassignedActiveTrainers(String username) throws InstanceNotFoundException {
+    private Set<TrainerDto> getTrainerList(String username) {
         Trainee trainee = this.getByUsername(username);
 
-        List<Trainer> trainers = trainerRepository.findAll().stream()
-                .filter(t -> !trainee.getTrainers().contains(t) && t.getUser().getIsActive()).toList();
-
-        return getTrainerList(trainers);
-    }
-
-    public Set<Trainer> getTraineeTrainersList(Long id) throws InstanceNotFoundException {
-        Trainee trainee = this.getById(id);
-
-        return trainee.getTrainers();
+        return trainee.getTrainers().stream()
+                .map(t -> TrainerDto.builder()
+                        .specializationId(t.getTrainingType().getId())
+                        .isActive(t.getUser().getIsActive())
+                        .firstName(t.getUser().getFirstName())
+                        .lastName(t.getUser().getLastName())
+                        .username(t.getUser().getUsername())
+                        .build())
+                .collect(Collectors.toSet());
     }
 
     @Transactional
-    public Map<Long, Map<String, Object>> addTrainerToTrainersList(String username, List<Trainer> trainers) throws InstanceNotFoundException {
+    public Set<TrainerDto> addTrainerToTrainersList(String username, List<Trainer> trainers) {
         Trainee trainee = this.getByUsername(username);
 
         for(Trainer trainer : trainers) {
@@ -226,18 +183,9 @@ public class TraineeService {
             trainer.getTrainees().add(trainee);
         }
 
-        log.info(String.format("Trainers have been added to the trainers list of trainee with the username: %s", username));
+        log.info(String.format("Trainers have been added to the trainers list of trainee with the username: %s",
+                username));
 
-        return getTrainerList(trainers);
-    }
-
-    @Transactional
-    public void deleteTrainerFromTrainersList(Long id, Trainer trainer) throws InstanceNotFoundException {
-        Trainee trainee = this.getById(id);
-
-        trainee.getTrainers().remove(trainer);
-        trainer.getTrainees().remove(trainee);
-
-        log.info(String.format("Trainer with the id: %d has been removed from the trainers list of trainee with the id: %d", trainer.getId(), id));
+        return getTrainerList(username);
     }
 }

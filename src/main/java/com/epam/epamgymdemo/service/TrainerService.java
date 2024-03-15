@@ -1,23 +1,27 @@
 package com.epam.epamgymdemo.service;
 
+import com.epam.epamgymdemo.exception.MissingInstanceException;
 import com.epam.epamgymdemo.model.bo.User;
 import com.epam.epamgymdemo.model.bo.TrainingType;
 import com.epam.epamgymdemo.model.bo.Trainer;
 import com.epam.epamgymdemo.model.bo.Training;
+import com.epam.epamgymdemo.model.dto.TrainerTrainingDto;
+import com.epam.epamgymdemo.model.dto.TrainerWithListDto;
+import com.epam.epamgymdemo.model.dto.UserDto;
 import com.epam.epamgymdemo.repository.TrainerRepository;
 import com.epam.epamgymdemo.repository.TrainingRepository;
 import com.epam.epamgymdemo.repository.TrainingTypeRepository;
 import com.epam.epamgymdemo.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.management.InstanceNotFoundException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -33,58 +37,58 @@ public class TrainerService {
 
     private final UserRepository userRepository;
 
+    private TrainerWithListDto createTrainerWithListDto(Trainer trainer) {
+        return TrainerWithListDto.builder()
+                .firstName(trainer.getUser().getFirstName())
+                .lastName(trainer.getUser().getLastName())
+                .isActive(trainer.getUser().getIsActive())
+                .specializationId(trainer.getTrainingType().getId())
+                .username(trainer.getUser().getUsername())
+                .trainees(this.getTraineeList(trainer.getUser().getUsername()))
+                .build();
+    }
+
     @Transactional
-    public Trainer create(Long typeId, User user) throws InstanceNotFoundException {
+    public void create(Long userId, Long typeId) {
         TrainingType specialization = trainingTypeRepository.findById(typeId)
-                .orElseThrow(() -> new InstanceNotFoundException(String.format("Training type not found with the id: %d", typeId)));
+                .orElseThrow(() -> new MissingInstanceException
+                        (String.format("Training type not found with the id: %d", typeId)));
 
         Trainer trainer = Trainer.builder()
                 .trainingType(specialization)
-                .user(user)
+                .user(userRepository.findById(userId).orElseThrow(() -> new MissingInstanceException
+                        (String.format("User not found with the id: %d", userId))))
                 .build();
 
         trainerRepository.save(trainer);
 
         log.info(String.format("Trainer with the id: %d successfully created", trainer.getId()));
-
-        return trainer;
     }
 
     @Transactional
-    public void update(Long id, Long typeId, Long userId) throws InstanceNotFoundException {
-        Trainer trainer = this.getById(id);
+    public TrainerWithListDto update(String username) {
+        Trainer trainer = this.getByUsername(username);
 
-        if (typeId != null) {
-            trainer.setTrainingType(trainingTypeRepository.findById(typeId)
-                    .orElseThrow(() -> new InstanceNotFoundException(String.format("Training type not found with the id: %d", typeId))));
-        }
-        if (userId != null) {
-            trainer.setUser(userRepository.findById(userId)
-                    .orElseThrow(() -> new InstanceNotFoundException(String.format("User not found with the id: %d", userId))));
-        }
+        log.info(String.format("Trainer with the id: %d successfully updated", trainer.getId()));
 
-        trainerRepository.save(trainer);
-
-        log.info(String.format("Trainer with the id: %d successfully updated", id));
+        return createTrainerWithListDto(trainer);
     }
 
-    public Trainer getById(Long id) throws InstanceNotFoundException {
-        return trainerRepository.findById(id).orElseThrow(() -> new InstanceNotFoundException(String.format("Trainer not found with the id: %d", id)));
+    public TrainerWithListDto get(String username) {
+        Trainer trainer = this.getByUsername(username);
+
+        return createTrainerWithListDto(trainer);
     }
 
-    public Trainer getByUsername(String username) throws InstanceNotFoundException {
-        User user = userRepository.findByUsername(username);
+    public Trainer getByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new MissingInstanceException
+                        (String.format("Trainer not found with the username: %s", username)));
 
-        List<Trainer> trainers = trainerRepository.findAll().stream().filter(t -> t.getUser().equals(user)).toList();
-
-        if (trainers.size() == 0) {
-            throw new InstanceNotFoundException(String.format("Trainer with not found with the username: %s", username));
-        } else if (trainers.size() > 1) {
-            throw new DuplicateKeyException(String.format("Multiple trainers found with the username : %s", username));
-        } else return trainers.get(0);
+        return user.getTrainer();
     }
 
-    public List<Trainer> getByUsernames(List<String> usernames) throws InstanceNotFoundException {
+    public List<Trainer> getByUsernames(List<String> usernames) {
         List<Trainer> trainers = new ArrayList<>();
 
         for (String username : usernames) {
@@ -94,30 +98,60 @@ public class TrainerService {
         return trainers;
     }
 
-    public Long getUserId(Long id) throws InstanceNotFoundException {
-        return this.getById(id).getUser().getId();
-    }
-
     public List<Trainer> getAll() {
         return trainerRepository.findAll();
     }
 
-    public List<Training> getTrainingsByUsernameAndCriteria(String trainerUsername, LocalDate fromDate, LocalDate toDate,
-                                                            String traineeName) throws InstanceNotFoundException {
+    public List<TrainerTrainingDto> getTrainingsByUsernameAndCriteria(String trainerUsername,
+                                                                      LocalDate fromDate,
+                                                                      LocalDate toDate,
+                                                                      String traineeName) {
         Trainer trainer = this.getByUsername(trainerUsername);
 
-        Stream<Training> trainingStream = trainingRepository.findAll().stream().filter(t -> t.getTrainer().equals(trainer));
+        Stream<Training> trainingStream = trainingRepository.findAll().stream()
+                .filter(t -> t.getTrainer().equals(trainer));
 
         if (fromDate != null) {
-            trainingStream = trainingStream.filter(t -> t.getTrainingDate().isEqual(fromDate) || t.getTrainingDate().isAfter(fromDate));
+            trainingStream = trainingStream.filter(t -> t.getTrainingDate()
+                    .isEqual(fromDate) || t.getTrainingDate().isAfter(fromDate));
         }
         if (toDate != null) {
-            trainingStream = trainingStream.filter(t -> t.getTrainingDate().isEqual(toDate) || t.getTrainingDate().isBefore(toDate));
+            trainingStream = trainingStream.filter(t -> t.getTrainingDate()
+                    .isEqual(toDate) || t.getTrainingDate().isBefore(toDate));
         }
         if (traineeName != null) {
-            trainingStream = trainingStream.filter(t -> t.getTrainee().getUser().getFirstName().equals(traineeName));
+            trainingStream = trainingStream
+                    .filter(t -> t.getTrainee().getUser().getFirstName().equals(traineeName));
         }
 
-        return trainingStream.toList();
+        List<Training> trainings = trainingStream.toList();
+
+        List<TrainerTrainingDto> traineeTrainingDtoList = new ArrayList<>();
+
+        for (Training training : trainings) {
+            traineeTrainingDtoList.add(TrainerTrainingDto.builder()
+                    .trainingName(training.getTrainingName())
+                    .trainingDate(training.getTrainingDate())
+                    .trainingDuration(training.getTrainingDuration())
+                    .trainingType(training.getTrainingType().getTypeName())
+                    .traineeName(training.getTrainee().getUser().getFirstName() + " "
+                            + training.getTrainee().getUser().getLastName())
+                    .build());
+        }
+
+        return traineeTrainingDtoList;
+    }
+
+    public Set<UserDto> getTraineeList(String username) {
+        Trainer trainer = this.getByUsername(username);
+
+        return trainer.getTrainees().stream()
+                .map(t -> UserDto.builder()
+                        .firstName(t.getUser().getFirstName())
+                        .lastName(t.getUser().getLastName())
+                        .username(t.getUser().getUsername())
+                        .isActive(t.getUser().getIsActive())
+                        .build())
+                .collect(Collectors.toSet());
     }
 }

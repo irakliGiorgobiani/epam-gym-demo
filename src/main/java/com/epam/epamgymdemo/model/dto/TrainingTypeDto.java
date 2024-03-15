@@ -1,20 +1,17 @@
 package com.epam.epamgymdemo.model.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
-
-@Data
 @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TrainingTypeDto {
-
-    private Long id;
 
     private String typeName;
 
-    private final List<TrainerDto> trainers = new ArrayList<>();
-
-    private final List<TrainingDto> trainings = new ArrayList<>();
+    private Long id;
 }

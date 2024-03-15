@@ -1,45 +1,49 @@
 package com.epam.epamgymdemo.controller;
 
-import com.epam.epamgymdemo.model.bo.Training;
+import com.epam.epamgymdemo.model.dto.TrainingDto;
+import com.epam.epamgymdemo.service.AuthenticationService;
+import com.epam.epamgymdemo.service.TrainingService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.management.InstanceNotFoundException;
 import javax.security.auth.login.CredentialNotFoundException;
-import java.text.NumberFormat;
-import java.text.ParseException;
-import java.time.LocalDate;
-import java.util.Map;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/trainings")
+@RequestMapping("/training/v1")
 public class TrainingController {
 
-    private final GymFacade gymFacade;
+    private final AuthenticationService authenticationService;
+
+    private final TrainingService trainingService;
 
     @PostMapping("/add")
-    public ResponseEntity<String> addTraining(@RequestBody Map<String, String> requestBody,
-                                              @RequestHeader(name = "username") String usernameAuth,
-                                              @RequestHeader(name = "password") String password) throws InstanceNotFoundException, CredentialNotFoundException, ParseException {
-        String token = gymFacade.authenticate(usernameAuth, password);
-
-        String traineeUsername = requestBody.get("traineeUsername");
-        String trainerUsername = requestBody.get("trainerUsername");
-        String trainingName = requestBody.get("trainingName");
-        String trainingTypeName = requestBody.get("trainingTypeName");
-        LocalDate trainingDate = LocalDate.parse(requestBody.get("trainingDate"));
-
-        NumberFormat numberFormat = NumberFormat.getInstance();
-        Number trainingDuration = numberFormat.parse(requestBody.get("trainingDuration"));
-
-        Long traineeId = gymFacade.getTraineeByUsername(traineeUsername, token).getId();
-        Long trainerId = gymFacade.getTrainerByUsername(trainerUsername, token).getId();
-        Long typeId = gymFacade.getTrainingTypeByName(trainingTypeName, token).getId();
-
-        Training training = gymFacade.createTraining(trainingName, trainingDate, trainingDuration, traineeId, trainerId, typeId, token);
-
-        return ResponseEntity.ok(String.format("Training added successfully with the id: %d", training.getId()));
+    @Operation(summary = "Creating a training",
+            description = "Create a new training with all needed fields like " +
+                    "traineeUsername, trainerUsername, trainingName, trainingDate, trainingDuration")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Successfully created the training with the given fields: " +
+                    "traineeUsername, trainerUsername, trainingDuration, trainingDate, trainingName"),
+            @ApiResponse(responseCode = "401", description = "Invalid Username or password"),
+            @ApiResponse(responseCode = "404",
+                    description = "The trainer instance with the given username does not exist or " +
+                    "the trainee with the given username does not exist")
+    })
+    public ResponseEntity<String> addTraining(@RequestBody TrainingDto requestBody,
+                                                          @RequestHeader(name = "username") String username,
+                                                          @RequestHeader(name = "password") String password)
+            throws CredentialNotFoundException {
+        authenticationService.authenticateUser(username, password);
+        trainingService.create(requestBody);
+        return ResponseEntity.ok("Training has been added");
     }
 }

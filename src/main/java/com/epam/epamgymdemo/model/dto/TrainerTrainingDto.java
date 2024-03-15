@@ -1,21 +1,25 @@
 package com.epam.epamgymdemo.model.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
 @Builder
 @Data
-public class TraineeTrainingListDto {
+@NoArgsConstructor
+@AllArgsConstructor
+public class TrainerTrainingDto {
 
     private String trainingName;
 
     private LocalDate trainingDate;
 
-    private String typeName;
+    private String trainingType;
 
     private Number trainingDuration;
 
-    private String trainerName;
+    private String traineeName;
 }

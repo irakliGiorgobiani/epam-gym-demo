@@ -1,103 +1,138 @@
 package com.epam.epamgymdemo.controller;
 
-import com.epam.epamgymdemo.model.bo.Trainer;
-import com.epam.epamgymdemo.model.bo.Training;
 import com.epam.epamgymdemo.model.bo.User;
+import com.epam.epamgymdemo.model.dto.ActiveDto;
+import com.epam.epamgymdemo.model.dto.TrainerDto;
+import com.epam.epamgymdemo.model.dto.TrainerTrainingDto;
+import com.epam.epamgymdemo.model.dto.TrainerWithListDto;
+import com.epam.epamgymdemo.model.dto.UsernamePasswordDto;
+import com.epam.epamgymdemo.service.AuthenticationService;
+import com.epam.epamgymdemo.service.TrainerService;
+import com.epam.epamgymdemo.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import javax.management.InstanceNotFoundException;
-import javax.naming.NamingException;
 import javax.security.auth.login.CredentialNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/trainers")
+@RequestMapping("/trainer/v1")
 public class TrainerController {
 
-    private final GymFacade gymFacade;
+    private final AuthenticationService authenticationService;
+
+    private final UserService userService;
+
+    private final TrainerService trainerService;
 
     @PostMapping("/register")
-    public Map<String, String> register(@RequestBody Map<String, String> requestBody) throws InstanceNotFoundException, NamingException {
-        String firstName = requestBody.get("firstName");
-        String lastName = requestBody.get("lastName");
-        Long trainingType = Long.parseLong(requestBody.get("specialization"));
-
-        Trainer trainer = gymFacade.createTrainer(trainingType, firstName, lastName, true);
-
-        return Map.of("username", trainer.getUser().getUsername(),
-                "password", trainer.getUser().getPassword());
+    @Transactional
+    @Operation(summary = "Creating a new trainer",
+            description = "Register a new trainer and also a new user associated to the trainer")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully registered a new trainer"),
+            @ApiResponse(responseCode = "400",
+                    description = "Either naming is not valid or at least one field was not given")
+    })
+    public ResponseEntity<UsernamePasswordDto> register(@RequestBody TrainerDto requestBody) {
+        User user = userService.create(requestBody);
+        trainerService.create(user.getId(), requestBody.getSpecializationId());
+        return ResponseEntity.ok(userService.usernameAndPassword(user));
     }
 
     @GetMapping("/{username}")
-    public Map<String, Object> get(@PathVariable String username,
-                                   @RequestHeader(name = "username") String usernameAuth, @RequestHeader(name = "password") String password) throws InstanceNotFoundException, CredentialNotFoundException {
-        String token = gymFacade.authenticate(usernameAuth, password);
-
-        Trainer trainer = gymFacade.getTrainerByUsername(username, token);
-        User user = trainer.getUser();
-
-        return Map.of("firstName", user.getFirstName(), "lastName", user.getLastName(),
-                "specialization", trainer.getTrainingType().getId(), "isActive", user.getIsActive(),
-                "traineesList", trainer.getTrainees().stream()
-                        .map(t -> Map.of("username", t.getUser().getUsername(), "firstName", t.getUser().getFirstName(),
-                                "lastName", t.getUser().getLastName()))
-                        .toList());
+    @Operation(summary = "Retrieving a trainer",
+            description = "Get the trainer and its fields and also the users fields associated to the trainer")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Successfully retrieved the trainer with the given username"),
+            @ApiResponse(responseCode = "401", description = "Invalid Username or password"),
+            @ApiResponse(responseCode = "404",
+                    description = "The trainer instance with the given username does not exist")
+    })
+    public ResponseEntity<TrainerWithListDto> get(@PathVariable String username,
+                                   @RequestHeader(name = "username") String usernameAuth,
+                                   @RequestHeader(name = "password") String password)
+            throws CredentialNotFoundException {
+        authenticationService.authenticateUser(usernameAuth, password);
+        return ResponseEntity.ok(trainerService.get(username));
     }
 
-    @PutMapping("/update")
-    public Map<String, Object> update(@RequestHeader(name = "username") String oldUsername, @RequestHeader(name = "password") String password,
-                                      @RequestBody Map<String, String> requestBody) throws InstanceNotFoundException, CredentialNotFoundException {
-        String token = gymFacade.authenticate(oldUsername, password);
-
-        String newUsername = requestBody.get("username");
-        String firstName = requestBody.get("firstName");
-        String lastName = requestBody.get("lastName");
-        Long trainingType = Long.parseLong(requestBody.get("specialization"));
-        Boolean isActive = Boolean.parseBoolean(requestBody.get("isActive"));
-
-        Trainer trainer = gymFacade.getTrainerByUsername(oldUsername, token);
-        User user = trainer.getUser();
-
-        gymFacade.updateTrainer(trainer.getId(), trainer.getTrainingType().getId(), user.getId(), token);
-        gymFacade.changeTrainersIsActive(trainer.getId(), token);
-        gymFacade.changeTrainersFirstName(trainer.getId(), firstName, token);
-        gymFacade.changeTrainerLastName(trainer.getId(), lastName, token);
-        gymFacade.changeTrainersUsername(trainer.getId(), newUsername, token);
-
-        return Map.of("username", user.getUsername(),"firstName", user.getFirstName(), "lastName", user.getLastName(),
-                "specialization", trainer.getTrainingType().getId(), "isActive", user.getIsActive(),
-                "traineesList", trainer.getTrainees().stream()
-                        .map(t -> Map.of("username", t.getUser().getUsername(), "firstName", t.getUser().getFirstName(),
-                                "lastName", t.getUser().getLastName()))
-                        .toList());
+    @PutMapping("/{username}")
+    @Operation(summary = "Updating a trainer",
+            description = "Update the trainer and also the user associated to the trainer")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200",
+                    description = "Successfully updated the trainer with the given username"),
+            @ApiResponse(responseCode = "401", description = "Invalid Username or password"),
+            @ApiResponse(responseCode = "404",
+                    description = "The trainer instance with the given username does not exist")
+    })
+    public ResponseEntity<TrainerWithListDto> update(@PathVariable String username,
+                                                     @RequestHeader(name = "username") String usernameAuth,
+                                                     @RequestHeader(name = "password") String password,
+                                                     @RequestBody TrainerDto requestBody)
+            throws CredentialNotFoundException {
+        authenticationService.authenticateUser(usernameAuth, password);
+        userService.update(username, requestBody);
+        return ResponseEntity.ok(trainerService.update(username));
     }
 
-    @GetMapping("/{username}/trainingsList")
-    public List<Training> getTrainingsList(@PathVariable String username,
-                                           @RequestParam(required = false) LocalDate fromDate,
-                                           @RequestParam(required = false) LocalDate toDate,
-                                           @RequestParam(required = false) String traineeName,
-                                           @RequestHeader(name = "username") String usernameAuth,
-                                           @RequestHeader(name = "password") String password) throws InstanceNotFoundException, CredentialNotFoundException {
-        String token = gymFacade.authenticate(usernameAuth, password);
-
-        return gymFacade.getTrainerTrainingsByUsernameAndCriteria(username, fromDate, toDate, traineeName, token);
+    @GetMapping("/{username}/training-list")
+    @Operation(summary = "Retrieving trainings related to a trainer",
+            description = "get all trainings that the trainer is involved in")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the trainings " +
+                    "related to the trainer with the given username"),
+            @ApiResponse(responseCode = "401", description = "Invalid Username or password"),
+            @ApiResponse(responseCode = "404",
+                    description = "The trainer instance with the given username does not exist")
+    })
+    public ResponseEntity<List<TrainerTrainingDto>> getTrainingList(@PathVariable String username,
+                                                                    @RequestParam(required = false) LocalDate fromDate,
+                                                                    @RequestParam(required = false) LocalDate toDate,
+                                                                    @RequestParam(required = false) String traineeName,
+                                                                    @RequestHeader(name = "username")
+                                                                        String usernameAuth,
+                                                                    @RequestHeader(name = "password") String password)
+            throws CredentialNotFoundException {
+        authenticationService.authenticateUser(usernameAuth, password);
+        return ResponseEntity.ok(trainerService.getTrainingsByUsernameAndCriteria(username, fromDate,
+                toDate, traineeName));
     }
 
-    @PatchMapping("/{username}/change-isActive/{isActive}")
-    public ResponseEntity<String> changeIsActive(@PathVariable String username, @PathVariable Boolean isActive,
-                                                 @RequestHeader(name = "username") String usernameAuth, @RequestHeader(name = "password") String password) throws InstanceNotFoundException, CredentialNotFoundException {
-        String token = gymFacade.authenticate(usernameAuth, password);
-
-        Long id = gymFacade.getTrainerByUsername(username, token).getId();
-
-        gymFacade.changeTrainersIsActive(id, token);
-
-        return ResponseEntity.ok(String.format("isActive changed successfully for the trainer with the username: %s", username));
+    @PatchMapping("/{username}/change-active/{isActive}")
+    @Operation(summary = "Updating the isActive field for a trainer",
+            description = "Change the isActive field of the trainer")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully updated the isActive field " +
+                    "for the trainer with the given username"),
+            @ApiResponse(responseCode = "401", description = "Invalid Username or password"),
+            @ApiResponse(responseCode = "404",
+                    description = "The trainer instance with the given username does not exist")
+    })
+    public ResponseEntity<ActiveDto> changeActive(@PathVariable String username,
+                                                    @PathVariable Boolean isActive,
+                                                    @RequestHeader(name = "username") String usernameAuth,
+                                                    @RequestHeader(name = "password") String password)
+            throws CredentialNotFoundException {
+        authenticationService.authenticateUser(usernameAuth, password);
+        return ResponseEntity.ok(userService.changeActive(username, isActive));
     }
 }

@@ -1,6 +1,6 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.exception.MissingInstanceException;
+import com.epam.epamgymdemo.exception.EntityNotFoundException;
 import com.epam.epamgymdemo.model.bo.Trainee;
 import com.epam.epamgymdemo.model.bo.Trainer;
 import com.epam.epamgymdemo.model.bo.Training;
@@ -52,7 +52,7 @@ public class TrainingService {
 
     private User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new MissingInstanceException
+                .orElseThrow(() -> new EntityNotFoundException
                         (String.format("User not found with the username: %s", username)));
     }
 }

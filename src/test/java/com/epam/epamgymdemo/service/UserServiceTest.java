@@ -3,6 +3,7 @@ package com.epam.epamgymdemo.service;
 import com.epam.epamgymdemo.generator.UsernamePasswordGenerator;
 import com.epam.epamgymdemo.model.bo.User;
 import com.epam.epamgymdemo.model.dto.UserDto;
+import com.epam.epamgymdemo.model.dto.UsernamePasswordDto;
 import com.epam.epamgymdemo.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,10 +11,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -31,6 +35,15 @@ class UserServiceTest {
 
     @InjectMocks
     private UserService userService;
+
+    @Test
+    void testUsernamePasswordDto() {
+        User user = User.builder().firstName("test").lastName("coverage").username("testCoverage").isActive(true).build();
+
+        UsernamePasswordDto usernamePasswordDto = userService.usernameAndPassword(user);
+
+        assertNotNull(usernamePasswordDto);
+    }
 
     @Test
     void testCreate() {
@@ -91,9 +104,24 @@ class UserServiceTest {
 
     @Test
     void testGetAll() {
-        userService.getAll();
+        User user1 = User.builder().username("user1").firstName("John").lastName("Doe").isActive(true).build();
+        User user2 = User.builder().username("user2").firstName("Jane").lastName("Smith").isActive(true).build();
 
-        verify(userRepository).findAll();
+        List<User> users = new ArrayList<>();
+        users.add(user1);
+        users.add(user2);
+
+        when(userRepository.findAll()).thenReturn(users);
+
+        List<UserDto> result = userService.getAll();
+
+        assertEquals(2, result.size());
+        assertEquals("John", result.get(0).getFirstName());
+        assertEquals("Doe", result.get(0).getLastName());
+        assertEquals(true, result.get(0).getIsActive());
+        assertEquals("Jane", result.get(1).getFirstName());
+        assertEquals("Smith", result.get(1).getLastName());
+        assertEquals(true, result.get(1).getIsActive());
     }
 
     @Test

@@ -1,6 +1,6 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.exception.MissingInstanceException;
+import com.epam.epamgymdemo.exception.EntityNotFoundException;
 import com.epam.epamgymdemo.model.bo.TrainingType;
 import com.epam.epamgymdemo.model.dto.TrainingTypeDto;
 import com.epam.epamgymdemo.repository.TrainingTypeRepository;
@@ -36,7 +36,7 @@ public class TrainingTypeService {
     public TrainingType getTrainingTypeByName(String trainingType) {
         if (trainingType != null) {
             return trainingTypeRepository.findByTypeName(trainingType)
-                    .orElseThrow(() -> new MissingInstanceException
+                    .orElseThrow(() -> new EntityNotFoundException
                             (String.format("Training type instance not found with the name: %s", trainingType)));
         } else return null;
     }

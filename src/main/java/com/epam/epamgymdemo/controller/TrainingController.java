@@ -27,8 +27,7 @@ public class TrainingController {
 
     @PostMapping("/add")
     @Operation(summary = "Creating a training",
-            description = "Create a new training with all needed fields like " +
-                    "traineeUsername, trainerUsername, trainingName, trainingDate, trainingDuration")
+            description = "Create a new training with the given fields from the request body")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200",
                     description = "Successfully created the training with the given fields: " +

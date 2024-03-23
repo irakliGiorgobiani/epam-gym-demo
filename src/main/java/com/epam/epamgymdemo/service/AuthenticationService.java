@@ -1,16 +1,14 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.exception.MissingInstanceException;
+import com.epam.epamgymdemo.exception.EntityNotFoundException;
 import com.epam.epamgymdemo.model.dto.UsernamePasswordDto;
 import com.epam.epamgymdemo.repository.UserRepository;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.springframework.stereotype.Service;
 
 import javax.security.auth.login.CredentialNotFoundException;
 
 @Service
-@Getter
 @AllArgsConstructor
 public class AuthenticationService {
 
@@ -24,7 +22,7 @@ public class AuthenticationService {
 
     public boolean isValidUser(String username, String password) {
         var user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new MissingInstanceException
+                .orElseThrow(() -> new EntityNotFoundException
                         (String.format("User not found with the username: %s", username)));
 
         return user != null && user.getPassword().equals(password);

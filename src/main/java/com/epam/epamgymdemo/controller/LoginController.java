@@ -9,8 +9,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,7 +43,7 @@ public class LoginController {
         return ResponseEntity.ok(authenticationService.usernamePassword(username, password));
     }
 
-    @PostMapping("/change-password/{newPassword}")
+    @PostMapping("/change-password")
     @Operation(summary = "Change user password",
             description = "after validating the username and password, " +
                     "change the password by giving a new password in the path variable")
@@ -51,9 +51,9 @@ public class LoginController {
             @ApiResponse(responseCode = "200", description = "Successfully changed user password"),
             @ApiResponse(responseCode = "401", description = "Failed to authorize")
     })
-    public ResponseEntity<UsernamePasswordDto> changePassword(@PathVariable String newPassword,
-                                                 @RequestHeader(name = "username") String username,
-                                                 @RequestHeader(name = "password") String oldPassword)
+    public ResponseEntity<UsernamePasswordDto> changePassword(@RequestHeader(name = "username") String username,
+                                                              @RequestHeader(name = "password") String oldPassword,
+                                                              @RequestBody String newPassword)
             throws CredentialNotFoundException {
         authenticationService.authenticateUser(username, oldPassword);
         userService.changePassword(username, newPassword);

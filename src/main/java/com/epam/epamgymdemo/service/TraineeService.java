@@ -1,6 +1,6 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.exception.MissingInstanceException;
+import com.epam.epamgymdemo.exception.EntityNotFoundException;
 import com.epam.epamgymdemo.model.bo.Trainee;
 import com.epam.epamgymdemo.model.bo.Trainer;
 import com.epam.epamgymdemo.model.bo.Training;
@@ -19,11 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -36,7 +34,7 @@ public class TraineeService {
 
     private final UserRepository userRepository;
 
-    private TraineeDto createTraineeDto(Trainee trainee) {
+    private TraineeDto convertTraineeToTraineeDto(Trainee trainee) {
         return TraineeDto.builder()
                 .firstName(trainee.getUser().getFirstName())
                 .lastName(trainee.getUser().getLastName())
@@ -54,7 +52,7 @@ public class TraineeService {
                 .birthday(traineeDto.getBirthday())
                 .address(traineeDto.getAddress())
                 .user(userRepository.findById(userId)
-                        .orElseThrow(() -> new MissingInstanceException(
+                        .orElseThrow(() -> new EntityNotFoundException(
                                 (String.format("User not found with the id: %d", userId)))))
                 .build();
 
@@ -78,18 +76,18 @@ public class TraineeService {
 
         log.info(String.format("Trainee with the id: %d successfully updated", trainee.getId()));
 
-        return createTraineeDto(trainee);
+        return convertTraineeToTraineeDto(trainee);
     }
 
     public TraineeDto get(String username) {
         Trainee trainee = this.getByUsername(username);
 
-        return createTraineeDto(trainee);
+        return convertTraineeToTraineeDto(trainee);
     }
 
     public Trainee getByUsername(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new MissingInstanceException
+                .orElseThrow(() -> new EntityNotFoundException
                         (String.format("Trainee not found with the username: %s", username)));
 
         return user.getTrainee();
@@ -100,9 +98,9 @@ public class TraineeService {
     }
 
     @Transactional
-    public TraineeDto deleteByUsername(String username) {
+    public TraineeDto delete(String username) {
         Trainee trainee = this.getByUsername(username);
-        TraineeDto traineeDto = createTraineeDto(trainee);
+        TraineeDto traineeDto = convertTraineeToTraineeDto(trainee);
 
         userRepository.deleteById(trainee.getUser().getId());
         traineeRepository.deleteById(trainee.getId());
@@ -117,43 +115,20 @@ public class TraineeService {
                                                                       LocalDate toDate,
                                                                       String trainerName,
                                                                       TrainingType trainingType) {
-        Trainee trainee = this.getByUsername(traineeUsername);
 
-        Stream<Training> trainingStream = trainingRepository.findAll().stream()
-                .filter(t -> t.getTrainee().equals(trainee));
+        List<Training> trainings = trainingRepository.findTrainings(traineeUsername, fromDate,
+                toDate, trainerName, trainingType);
 
-        if (fromDate != null) {
-            trainingStream = trainingStream.filter(t -> t.getTrainingDate()
-                    .isEqual(fromDate) || t.getTrainingDate().isAfter(fromDate));
-        }
-        if (toDate != null) {
-            trainingStream = trainingStream.filter(t -> t.getTrainingDate()
-                    .isEqual(toDate) || t.getTrainingDate().isBefore(toDate));
-        }
-        if (trainerName != null) {
-            trainingStream = trainingStream.filter(t -> t.getTrainer().getUser().getFirstName().equals(trainerName));
-        }
-        if (trainingType != null) {
-            trainingStream = trainingStream.filter(t -> t.getTrainingType()
-                    .getId().longValue() == trainingType.getId().longValue());
-        }
-
-        List<Training> trainings = trainingStream.toList();
-
-        List<TraineeTrainingDto> traineeTrainingDtoList = new ArrayList<>();
-
-        for (Training training : trainings) {
-            traineeTrainingDtoList.add(TraineeTrainingDto.builder()
-                    .trainingName(training.getTrainingName())
-                    .trainingDate(training.getTrainingDate())
-                    .trainingDuration(training.getTrainingDuration())
-                    .trainingType(training.getTrainingType().getTypeName())
-                    .trainerName(training.getTrainer().getUser().getFirstName() + " "
-                            + training.getTrainer().getUser().getLastName())
-                    .build());
-        }
-
-        return traineeTrainingDtoList;
+        return trainings.stream()
+                .map(training -> TraineeTrainingDto.builder()
+                        .trainingName(training.getTrainingName())
+                        .trainingDate(training.getTrainingDate())
+                        .trainingDuration(training.getTrainingDuration())
+                        .trainingType(training.getTrainingType().getTypeName())
+                        .trainerName(training.getTrainer().getUser().getFirstName() + " "
+                                + training.getTrainer().getUser().getLastName())
+                        .build())
+                .toList();
     }
 
     public Set<TrainerDto> getUnassignedActiveTrainers(String username) {
@@ -178,10 +153,10 @@ public class TraineeService {
     public Set<TrainerDto> addTrainerToTrainersList(String username, List<Trainer> trainers) {
         Trainee trainee = this.getByUsername(username);
 
-        for(Trainer trainer : trainers) {
+        trainers.forEach(trainer -> {
             trainee.getTrainers().add(trainer);
             trainer.getTrainees().add(trainee);
-        }
+        });
 
         log.info(String.format("Trainers have been added to the trainers list of trainee with the username: %s",
                 username));

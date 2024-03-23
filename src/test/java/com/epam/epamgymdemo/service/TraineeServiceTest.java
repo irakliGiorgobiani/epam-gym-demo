@@ -56,9 +56,25 @@ class TraineeServiceTest {
 
     @Test
     void testUpdate() {
-        User user = User.builder().username("username").firstName("george").lastName("russell").id(1L).build();
-        Trainee trainee = Trainee.builder().id(1L).address("address").trainers(new HashSet<>()).birthday(LocalDate.now()).user(user).build();
-        TraineeDto traineeDto = TraineeDto.builder().firstName("firstName").lastName("lastName").address("New Address").isActive(true).build();
+        User user = User.builder()
+                .username("username")
+                .firstName("george")
+                .lastName("russell")
+                .id(1L)
+                .build();
+        Trainee trainee = Trainee.builder()
+                .id(1L)
+                .address("address")
+                .trainers(new HashSet<>())
+                .birthday(LocalDate.now())
+                .user(user)
+                .build();
+        TraineeDto traineeDto = TraineeDto.builder()
+                .firstName("firstName")
+                .lastName("lastName")
+                .address("New Address")
+                .isActive(true)
+                .build();
         user.setTrainee(trainee);
 
         when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
@@ -96,7 +112,7 @@ class TraineeServiceTest {
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(user));
 
-        traineeService.deleteByUsername(user.getUsername());
+        traineeService.delete(user.getUsername());
 
         verify(traineeRepository).deleteById(trainee.getId());
         verify(userRepository).deleteById(user.getId());
@@ -104,17 +120,35 @@ class TraineeServiceTest {
 
     @Test
     void testGetTrainingsByUsernameAndCriteria() {
-        User user = User.builder().username("username").build();
-        User userTrainer = User.builder().firstName("username").lastName("lastName").build();
-        Trainee trainee = Trainee.builder().id(1L).user(user).build();
-        Trainer trainer = Trainer.builder().user(userTrainer).build();
-        Training training = Training.builder().trainer(trainer).trainingType(TrainingType.builder().typeName("name").build()).trainingDate(LocalDate.now()).trainee(trainee).build();
+        User user = User.builder()
+                .username("username")
+                .build();
+        User userTrainer = User.builder()
+                .firstName("username")
+                .lastName("lastName")
+                .build();
+        Trainee trainee = Trainee.builder()
+                .id(1L)
+                .user(user)
+                .build();
+        Trainer trainer = Trainer.builder()
+                .user(userTrainer)
+                .build();
+        Training training = Training.builder()
+                .trainer(trainer)
+                .trainingType(TrainingType.builder()
+                        .typeName("name")
+                        .build()).trainingDate(LocalDate.now())
+                .trainee(trainee)
+                .build();
         user.setTrainee(trainee);
 
-        when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(user));
-        when(trainingRepository.findAll()).thenReturn(List.of(training));
+        when(trainingRepository.findTrainings(user.getUsername(),
+                LocalDate.of(2020, 1, 1),
+                null, null, null)).thenReturn(List.of(training));
 
-        List<TraineeTrainingDto> trainingsByUsernameAndCriteria = traineeService.getTrainingsByUsernameAndCriteria(user.getUsername(),
+        List<TraineeTrainingDto> trainingsByUsernameAndCriteria = traineeService
+                .getTrainingsByUsernameAndCriteria(user.getUsername(),
                 LocalDate.of(2020, 1, 1), null, null, null);
 
         assertEquals(training.getTrainingName(), trainingsByUsernameAndCriteria.get(0).getTrainingName());
@@ -123,10 +157,29 @@ class TraineeServiceTest {
 
     @Test
     void testGetTrainerUnassignedToTrainee() {
-        User user = User.builder().username("username").firstName("firstname").lastName("lastName").isActive(true).build();
-        User userTrainer = User.builder().username("username").firstName("firstname").lastName("lastName").isActive(true).build();
-        Trainee trainee = Trainee.builder().id(1L).user(user).trainers(new HashSet<>()).build();
-        Trainer trainer1 =  Trainer.builder().user(userTrainer).trainingType(TrainingType.builder().id(1L).build()).build();
+        User user = User.builder()
+                .username("username")
+                .firstName("firstname")
+                .lastName("lastName")
+                .isActive(true)
+                .build();
+        User userTrainer = User.builder()
+                .username("username")
+                .firstName("firstname")
+                .lastName("lastName")
+                .isActive(true)
+                .build();
+        Trainee trainee = Trainee.builder()
+                .id(1L)
+                .user(user)
+                .trainers(new HashSet<>())
+                .build();
+        Trainer trainer1 =  Trainer.builder()
+                .user(userTrainer)
+                .trainingType(TrainingType.builder()
+                        .id(1L)
+                        .build())
+                .build();
         user.setTrainee(trainee);
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(user));
@@ -134,16 +187,36 @@ class TraineeServiceTest {
 
         Set<TrainerDto> trainersUnassignedToTrainee = traineeService.getUnassignedActiveTrainers(user.getUsername());
 
-        assertEquals(trainer1.getUser().getUsername(), trainersUnassignedToTrainee.stream().toList().get(0).getUsername());
+        assertEquals(trainer1.getUser().getUsername(),
+                trainersUnassignedToTrainee.stream().toList().get(0).getUsername());
         assertEquals(1, trainersUnassignedToTrainee.size());
     }
 
     @Test
     void testAddTrainerToTraineesTrainersList() {
-        User user = User.builder().isActive(true).firstName("firstName").lastName("lastName").username("username").build();
-        User userTrainer = User.builder().username("username").firstName("firstname").lastName("lastName").isActive(true).build();
-        Trainee trainee = Trainee.builder().trainers(new HashSet<>()).id(1L).user(user).build();
-        Trainer trainer = Trainer.builder().user(userTrainer).trainingType(TrainingType.builder().id(1L).build()).trainees(new HashSet<>()).build();
+        User user = User.builder()
+                .isActive(true)
+                .firstName("firstName")
+                .lastName("lastName")
+                .username("username")
+                .build();
+        User userTrainer = User.builder()
+                .username("username")
+                .firstName("firstname")
+                .lastName("lastName")
+                .isActive(true)
+                .build();
+        Trainee trainee = Trainee.builder()
+                .trainers(new HashSet<>())
+                .id(1L).user(user)
+                .build();
+        Trainer trainer = Trainer.builder()
+                .user(userTrainer)
+                .trainingType(TrainingType.builder()
+                        .id(1L)
+                        .build())
+                .trainees(new HashSet<>())
+                .build();
         List<Trainer> trainers = List.of(trainer);
         user.setTrainee(trainee);
 

@@ -29,7 +29,6 @@ public class UsernamePasswordGeneratorTest {
 
     @Test
     public void testGenerateUsername() {
-        // Arrange
         String firstName = "John";
         String lastName = "Doe";
         List<User> users = new ArrayList<>();

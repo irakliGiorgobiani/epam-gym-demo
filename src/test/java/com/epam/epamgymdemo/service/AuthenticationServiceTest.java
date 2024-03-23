@@ -1,6 +1,6 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.exception.MissingInstanceException;
+import com.epam.epamgymdemo.exception.EntityNotFoundException;
 import com.epam.epamgymdemo.model.bo.User;
 import com.epam.epamgymdemo.model.dto.UsernamePasswordDto;
 import com.epam.epamgymdemo.repository.UserRepository;
@@ -51,7 +51,7 @@ public class AuthenticationServiceTest {
 
     @Test
     void testAuthenticateUserFailure() {
-        assertThrows(MissingInstanceException.class, () -> authenticationService.authenticateUser("exception", "expected"));
+        assertThrows(EntityNotFoundException.class, () -> authenticationService.authenticateUser("exception", "expected"));
     }
 
     @Test

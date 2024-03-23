@@ -1,7 +1,7 @@
 package com.epam.epamgymdemo.service;
 
 import com.epam.epamgymdemo.exception.MissingFieldException;
-import com.epam.epamgymdemo.exception.MissingInstanceException;
+import com.epam.epamgymdemo.exception.EntityNotFoundException;
 import com.epam.epamgymdemo.exception.NamingException;
 import com.epam.epamgymdemo.generator.UsernamePasswordGenerator;
 import com.epam.epamgymdemo.model.bo.User;
@@ -25,15 +25,6 @@ public class UserService {
     private final UserRepository userRepository;
 
     private final UsernamePasswordGenerator usernamePasswordGenerator;
-
-    private UserDto createUserDto(User user) {
-        return UserDto.builder()
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .username(user.getUsername())
-                .isActive(user.getIsActive())
-                .build();
-    }
 
     private UserDto validateFields(UserDto userDto) {
         if (userDto.getFirstName() == null) {
@@ -102,7 +93,7 @@ public class UserService {
 
     public User getByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new MissingInstanceException
+                .orElseThrow(() -> new EntityNotFoundException
                         (String.format("User not found with the username: %s", username)));
     }
 
@@ -110,7 +101,12 @@ public class UserService {
         List<UserDto> userDtoList = new ArrayList<>();
 
         for (User user : userRepository.findAll()) {
-            userDtoList.add(createUserDto(user));
+            userDtoList.add(UserDto.builder()
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .username(user.getUsername())
+                    .isActive(user.getIsActive())
+                    .build());
         }
 
         return userDtoList;

@@ -123,9 +123,8 @@ public class TraineeController {
                                          @RequestHeader(name = "username") String usernameAuth,
                                          @RequestHeader(name = "password") String password)
             throws CredentialNotFoundException {
-        System.out.println(username);
         authenticationService.authenticateUser(usernameAuth, password);
-        return ResponseEntity.ok(traineeService.deleteByUsername(username));
+        return ResponseEntity.ok(traineeService.delete(username));
     }
 
     @GetMapping("/{username}/not-assigned-trainers")
@@ -168,7 +167,7 @@ public class TraineeController {
                 .addTrainerToTrainersList(username, trainerService.getByUsernames(trainerUsernames)));
     }
 
-    @GetMapping("/{username}/training-list")
+    @GetMapping("/{username}/trainings-list")
     @Operation(summary = "Retrieving trainings that a trainee is involved in",
             description = "get all trainings that the trainee is involved in, also providing optional parameters")
     @ApiResponses(value = {
@@ -193,7 +192,7 @@ public class TraineeController {
                 toDate, trainerName, trainingTypeService.getTrainingTypeByName(typeName)));
     }
 
-    @PatchMapping("/{username}/change-active/{isActive}")
+    @PatchMapping("/{username}/change-activity/{isActive}")
     @Operation(summary = "Changing the isActive field for a trainee",
             description = "change the isActive field of the trainee")
     @ApiResponses(value = {

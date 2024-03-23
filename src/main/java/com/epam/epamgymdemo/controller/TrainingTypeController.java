@@ -27,7 +27,7 @@ public class TrainingTypeController {
 
     @GetMapping
     @Operation(summary = "Retrieving all trainingTypes",
-            description = "Get all trainingTypes that are available from the database")
+            description = "Get all training types that are available from the database")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved all trainingTypes"),
             @ApiResponse(responseCode = "401", description = "Invalid Username or password"),

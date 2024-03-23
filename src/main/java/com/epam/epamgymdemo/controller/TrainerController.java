@@ -94,7 +94,7 @@ public class TrainerController {
         return ResponseEntity.ok(trainerService.update(username));
     }
 
-    @GetMapping("/{username}/training-list")
+    @GetMapping("/{username}/trainings")
     @Operation(summary = "Retrieving trainings related to a trainer",
             description = "get all trainings that the trainer is involved in")
     @ApiResponses(value = {

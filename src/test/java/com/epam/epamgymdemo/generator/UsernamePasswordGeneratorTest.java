@@ -1,7 +1,6 @@
-package com.epam.epamgymdemo;
+package com.epam.epamgymdemo.generator;
 
-import com.epam.epamgymdemo.generator.UsernamePasswordGenerator;
-import com.epam.epamgymdemo.model.User;
+import com.epam.epamgymdemo.model.bo.User;
 import com.epam.epamgymdemo.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +29,6 @@ public class UsernamePasswordGeneratorTest {
 
     @Test
     public void testGenerateUsername() {
-        // Arrange
         String firstName = "John";
         String lastName = "Doe";
         List<User> users = new ArrayList<>();

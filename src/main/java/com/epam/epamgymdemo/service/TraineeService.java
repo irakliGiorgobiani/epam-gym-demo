@@ -1,20 +1,27 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.model.*;
+import com.epam.epamgymdemo.exception.EntityNotFoundException;
+import com.epam.epamgymdemo.model.bo.Trainee;
+import com.epam.epamgymdemo.model.bo.Trainer;
+import com.epam.epamgymdemo.model.bo.Training;
+import com.epam.epamgymdemo.model.bo.TrainingType;
+import com.epam.epamgymdemo.model.bo.User;
+import com.epam.epamgymdemo.model.dto.TraineeDto;
+import com.epam.epamgymdemo.model.dto.TrainerDto;
+import com.epam.epamgymdemo.model.dto.TraineeTrainingDto;
+import com.epam.epamgymdemo.model.dto.UserDto;
 import com.epam.epamgymdemo.repository.TraineeRepository;
-import com.epam.epamgymdemo.repository.TrainerRepository;
 import com.epam.epamgymdemo.repository.TrainingRepository;
+import com.epam.epamgymdemo.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.management.InstanceNotFoundException;
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -22,48 +29,68 @@ import java.util.stream.Stream;
 public class TraineeService {
 
     private final TraineeRepository traineeRepository;
-    private final TrainerRepository trainerRepository;
+
     private final TrainingRepository trainingRepository;
-    private final UserService userService;
+
+    private final UserRepository userRepository;
+
+    private TraineeDto convertTraineeToTraineeDto(Trainee trainee) {
+        return TraineeDto.builder()
+                .firstName(trainee.getUser().getFirstName())
+                .lastName(trainee.getUser().getLastName())
+                .username(trainee.getUser().getUsername())
+                .birthday(trainee.getBirthday())
+                .address(trainee.getAddress())
+                .isActive(trainee.getUser().getIsActive())
+                .trainers(this.getTrainerList(trainee.getUser().getUsername()))
+                .build();
+    }
 
     @Transactional
-    public Trainee create(LocalDate birthday, String address,
-                          String firstName, String lastName, Boolean isActive) throws InstanceNotFoundException {
-        User user = userService.create(firstName, lastName, isActive);
-
+    public void create(Long userId, TraineeDto traineeDto) {
         Trainee trainee = Trainee.builder()
-                .birthday(birthday)
-                .address(address)
-                .user(user)
-                .trainers(new HashSet<>())
+                .birthday(traineeDto.getBirthday())
+                .address(traineeDto.getAddress())
+                .user(userRepository.findById(userId)
+                        .orElseThrow(() -> new EntityNotFoundException(
+                                (String.format("User not found with the id: %d", userId)))))
                 .build();
+
         traineeRepository.save(trainee);
 
         log.info(String.format("Trainee with the id: %d successfully created", trainee.getId()));
-
-        return trainee;
     }
 
     @Transactional
-    public void update(Long id, LocalDate birthday, String address, Long userId) throws InstanceNotFoundException {
-        Trainee trainee = this.getById(id);
-        if (birthday != null) {
-            trainee.setBirthday(birthday);
+    public TraineeDto update(String username, TraineeDto updatedTraineeDto) {
+        Trainee trainee = this.getByUsername(username);
+
+        if (updatedTraineeDto.getBirthday() != null) {
+            trainee.setBirthday(updatedTraineeDto.getBirthday());
         }
-        if (address != null) {
-            trainee.setAddress(address);
-        }
-        if (userId != null) {
-            trainee.setUser(userService.getById(userId));
+        if (updatedTraineeDto.getAddress() != null) {
+            trainee.setAddress(updatedTraineeDto.getAddress());
         }
 
         traineeRepository.save(trainee);
 
-        log.info(String.format("Trainee with the id: %d successfully updated", id));
+        log.info(String.format("Trainee with the id: %d successfully updated", trainee.getId()));
+
+        return convertTraineeToTraineeDto(trainee);
     }
 
-    public Trainee getById(Long id) throws InstanceNotFoundException {
-        return traineeRepository.findById(id).orElseThrow(() -> new InstanceNotFoundException(String.format("Trainee not found with the id: %d", id)));
+    public TraineeDto get(String username) {
+        Trainee trainee = this.getByUsername(username);
+
+        return convertTraineeToTraineeDto(trainee);
+    }
+
+    public Trainee getByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException
+                        (String.format("Trainee not found with the username: %s", username)));
+
+        return user.getTrainee();
     }
 
     public List<Trainee> getAll() {
@@ -71,99 +98,69 @@ public class TraineeService {
     }
 
     @Transactional
-    public void deleteById(Long id) throws InstanceNotFoundException {
-        Long userId = this.getById(id).getUser().getId();
+    public TraineeDto delete(String username) {
+        Trainee trainee = this.getByUsername(username);
+        TraineeDto traineeDto = convertTraineeToTraineeDto(trainee);
 
-        userService.deleteById(userId);
-        traineeRepository.deleteById(id);
-
-        log.info(String.format("Trainee with the id: %d successfully deleted", id));
-    }
-
-    @Transactional
-    public void changePassword(Long id, String password) throws InstanceNotFoundException {
-        var trainee = this.getById(id);
-
-        userService.changePassword(trainee.getUser().getId(), password);
-
-        log.info(String.format("Password for the trainee with the id: %d successfully changed", id));
-    }
-
-    @Transactional
-    public void changeIsActive(Long id, Boolean isActive) throws InstanceNotFoundException {
-        var trainee = this.getById(id);
-
-        userService.changeIsActive(trainee.getUser().getId(), isActive);
-
-        log.info(String.format("Activity for the trainee with the id: %d successfully changed", id));
-    }
-
-    public Trainee getByUsername(String username) throws InstanceNotFoundException {
-        User user = userService.getByUsername(username);
-
-        List<Trainee> trainees = this.getAll().stream().filter(t -> t.getUser().equals(user)).toList();
-
-        if (trainees.size() == 0) {
-            throw new InstanceNotFoundException(String.format("Trainee not found with the username: %s", username));
-        } else if (trainees.size() > 1) {
-            throw new DuplicateKeyException(String.format("Multiple trainees found with the username : %s", username));
-        } else return trainees.get(0);
-    }
-
-    @Transactional
-    public void deleteByUsername(String username) throws InstanceNotFoundException {
-        Long id = this.getByUsername(username).getId();
-
-        this.deleteById(id);
+        userRepository.deleteById(trainee.getUser().getId());
+        traineeRepository.deleteById(trainee.getId());
 
         log.info(String.format("Trainee with the username: %s successfully deleted", username));
+
+        return traineeDto;
     }
 
-    public List<Training> getTrainingsByUsernameAndCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate,
-                                                            String trainerName, TrainingType trainingType) throws InstanceNotFoundException {
-        Trainee trainee = this.getByUsername(traineeUsername);
+    public List<TraineeTrainingDto> getTrainingsByUsernameAndCriteria(String traineeUsername,
+                                                                      LocalDate fromDate,
+                                                                      LocalDate toDate,
+                                                                      String trainerName,
+                                                                      TrainingType trainingType) {
 
-        Stream<Training> trainingStream = trainingRepository.findAll().stream().filter(t -> t.getTrainee().equals(trainee));
+        List<Training> trainings = trainingRepository.findTrainings(traineeUsername, fromDate,
+                toDate, trainerName, trainingType);
 
-        if (fromDate != null) {
-            trainingStream = trainingStream.filter(t -> t.getTrainingDate().isEqual(fromDate) || t.getTrainingDate().isAfter(fromDate));
-        }
-        if (toDate != null) {
-            trainingStream = trainingStream.filter(t -> t.getTrainingDate().isEqual(toDate) || t.getTrainingDate().isBefore(toDate));
-        }
-        if (trainerName != null) {
-            trainingStream = trainingStream.filter(t -> t.getTrainer().getUser().getFirstName().equals(trainerName));
-        }
-        if (trainingType != null) {
-            trainingStream = trainingStream.filter(t -> t.getTrainingType().getId().longValue() == trainingType.getId().longValue());
-        }
-
-        return trainingStream.toList();
+        return trainings.stream()
+                .map(training -> TraineeTrainingDto.builder()
+                        .trainingName(training.getTrainingName())
+                        .trainingDate(training.getTrainingDate())
+                        .trainingDuration(training.getTrainingDuration())
+                        .trainingType(training.getTrainingType().getTypeName())
+                        .trainerName(training.getTrainer().getUser().getFirstName() + " "
+                                + training.getTrainer().getUser().getLastName())
+                        .build())
+                .toList();
     }
 
-    public List<Trainer> getUnassignedTrainers(String username) throws InstanceNotFoundException {
+    public Set<TrainerDto> getUnassignedActiveTrainers(String username) {
+        return getTrainerList(username).stream().filter(UserDto::getIsActive).collect(Collectors.toSet());
+    }
+
+    private Set<TrainerDto> getTrainerList(String username) {
         Trainee trainee = this.getByUsername(username);
 
-        return trainerRepository.findAll().stream().filter(t -> !trainee.getTrainers().contains(t)).toList();
+        return trainee.getTrainers().stream()
+                .map(t -> TrainerDto.builder()
+                        .specializationId(t.getTrainingType().getId())
+                        .isActive(t.getUser().getIsActive())
+                        .firstName(t.getUser().getFirstName())
+                        .lastName(t.getUser().getLastName())
+                        .username(t.getUser().getUsername())
+                        .build())
+                .collect(Collectors.toSet());
     }
 
     @Transactional
-    public void addTrainerToTrainersList(Long id, Trainer trainer) throws InstanceNotFoundException {
-        Trainee trainee = this.getById(id);
+    public Set<TrainerDto> addTrainerToTrainersList(String username, List<Trainer> trainers) {
+        Trainee trainee = this.getByUsername(username);
 
-        trainee.getTrainers().add(trainer);
-        trainer.getTrainees().add(trainee);
+        trainers.forEach(trainer -> {
+            trainee.getTrainers().add(trainer);
+            trainer.getTrainees().add(trainee);
+        });
 
-        log.info(String.format("Trainer with the id: %d has been added to the trainers list of trainee with the id: %d", trainer.getId(), id));
-    }
+        log.info(String.format("Trainers have been added to the trainers list of trainee with the username: %s",
+                username));
 
-    @Transactional
-    public void removeTrainerFromTrainersList(Long id, Trainer trainer) throws InstanceNotFoundException {
-        Trainee trainee = this.getById(id);
-
-        trainee.getTrainers().remove(trainer);
-        trainer.getTrainees().remove(trainee);
-
-        log.info(String.format("Trainer with the id: %d has been removed from the trainers list of trainee with the id: %d", trainer.getId(), id));
+        return getTrainerList(username);
     }
 }

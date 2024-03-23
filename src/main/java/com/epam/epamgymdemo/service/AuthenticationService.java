@@ -1,47 +1,34 @@
 package com.epam.epamgymdemo.service;
 
-import lombok.Getter;
+import com.epam.epamgymdemo.exception.EntityNotFoundException;
+import com.epam.epamgymdemo.model.dto.UsernamePasswordDto;
+import com.epam.epamgymdemo.repository.UserRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import javax.management.InstanceNotFoundException;
 import javax.security.auth.login.CredentialNotFoundException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 @Service
-@Getter
+@AllArgsConstructor
 public class AuthenticationService {
 
-    private final UserService userService;
-    private final Map<String, String> sessions = new HashMap<>();
+    private final UserRepository userRepository;
 
-    public AuthenticationService(UserService userService) {
-        this.userService = userService;
-    }
-
-    public String authenticateUser(String username, String password) throws InstanceNotFoundException {
-        if (isValidUser(username, password)) {
-            String token = generateToken();
-            sessions.put(token, username);
-            return token;
+    public void authenticateUser(String username, String password) throws CredentialNotFoundException {
+        if (!isValidUser(username, password)) {
+            throw new CredentialNotFoundException("Invalid username or password");
         }
-        return null;
     }
 
-    public boolean isValidUser(String username, String password) throws InstanceNotFoundException {
-        var user = userService.getByUsername(username);
+    public boolean isValidUser(String username, String password) {
+        var user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException
+                        (String.format("User not found with the username: %s", username)));
 
         return user != null && user.getPassword().equals(password);
     }
 
-    public void isAuthorized(String token) throws CredentialNotFoundException {
-        if (!sessions.containsKey(token)) {
-            throw new CredentialNotFoundException("User not authorized");
-        }
-    }
-
-    private String generateToken() {
-        return UUID.randomUUID().toString();
+    public UsernamePasswordDto usernamePassword(String username, String password) {
+        return UsernamePasswordDto.builder().username(username).password(password).build();
     }
 }

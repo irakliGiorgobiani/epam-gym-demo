@@ -1,5 +1,6 @@
-package com.epam.epamgymdemo.model;
+package com.epam.epamgymdemo.model.bo;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -20,9 +21,11 @@ import java.util.List;
 @Entity
 @Table(name = "training_type")
 public class TrainingType {
+
     @Id
     @Column(name = "id")
     private Long id;
+
     @Column(name = "type_name", nullable = false)
     private String typeName;
 
@@ -30,5 +33,6 @@ public class TrainingType {
     private final List<Trainer> trainers = new ArrayList<>();
 
     @OneToMany(mappedBy = "trainingType")
+    @JsonBackReference
     private final List<Training> trainings = new ArrayList<>();
 }

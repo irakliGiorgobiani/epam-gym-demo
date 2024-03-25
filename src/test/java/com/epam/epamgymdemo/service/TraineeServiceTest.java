@@ -1,5 +1,6 @@
 package com.epam.epamgymdemo.service;
 
+import com.epam.epamgymdemo.metrics.CustomMetrics;
 import com.epam.epamgymdemo.model.bo.Trainee;
 import com.epam.epamgymdemo.model.bo.Trainer;
 import com.epam.epamgymdemo.model.bo.Training;
@@ -39,6 +40,9 @@ class TraineeServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private CustomMetrics customMetrics;
 
     @InjectMocks
     private TraineeService traineeService;

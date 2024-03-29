@@ -3,7 +3,7 @@ package com.epam.epamgymdemo.service;
 import com.epam.epamgymdemo.generator.UsernamePasswordGenerator;
 import com.epam.epamgymdemo.model.bo.User;
 import com.epam.epamgymdemo.model.dto.UserDto;
-import com.epam.epamgymdemo.model.dto.UsernamePasswordDto;
+import com.epam.epamgymdemo.model.dto.UsernamePasswordTokenDto;
 import com.epam.epamgymdemo.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +33,9 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private JwtService jwtService;
+
     @InjectMocks
     private UserService userService;
 
@@ -40,9 +43,9 @@ class UserServiceTest {
     void testUsernamePasswordDto() {
         User user = User.builder().firstName("test").lastName("coverage").username("testCoverage").isActive(true).build();
 
-        UsernamePasswordDto usernamePasswordDto = userService.usernameAndPassword(user);
+        UsernamePasswordTokenDto usernamePasswordTokenDto = userService.usernameAndPassword(user, jwtService);
 
-        assertNotNull(usernamePasswordDto);
+        assertNotNull(usernamePasswordTokenDto);
     }
 
     @Test

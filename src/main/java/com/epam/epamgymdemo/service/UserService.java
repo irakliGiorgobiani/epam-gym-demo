@@ -7,10 +7,13 @@ import com.epam.epamgymdemo.generator.UsernamePasswordGenerator;
 import com.epam.epamgymdemo.model.bo.User;
 import com.epam.epamgymdemo.model.dto.ActiveDto;
 import com.epam.epamgymdemo.model.dto.UserDto;
-import com.epam.epamgymdemo.model.dto.UsernamePasswordDto;
+import com.epam.epamgymdemo.model.dto.UsernamePasswordTokenDto;
 import com.epam.epamgymdemo.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +23,7 @@ import java.util.List;
 @Service
 @Slf4j
 @AllArgsConstructor
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
@@ -48,8 +51,12 @@ public class UserService {
         return userDto;
     }
 
-    public UsernamePasswordDto usernameAndPassword(User user) {
-        return UsernamePasswordDto.builder().username(user.getUsername()).password(user.getPassword()).build();
+    public UsernamePasswordTokenDto usernameAndPassword(User user, JwtService jwtService) {
+        return UsernamePasswordTokenDto.builder()
+                .username(user.getUsername())
+                .password(user.getPassword())
+                .token(jwtService.generateToken(user))
+                .build();
     }
 
     @Transactional
@@ -130,5 +137,10 @@ public class UserService {
         user.setIsActive(isActive);
 
         return ActiveDto.builder().isActive(user.getIsActive()).build();
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return this.getByUsername(username);
     }
 }

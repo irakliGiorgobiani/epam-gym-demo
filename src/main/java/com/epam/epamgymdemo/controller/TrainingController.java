@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.security.auth.login.CredentialNotFoundException;
-
 @RestController
 @AllArgsConstructor
 @RequestMapping("/training/v1")
@@ -39,8 +37,7 @@ public class TrainingController {
     })
     public ResponseEntity<String> addTraining(@RequestBody TrainingDto requestBody,
                                                           @RequestHeader(name = "username") String username,
-                                                          @RequestHeader(name = "password") String password)
-            throws CredentialNotFoundException {
+                                                          @RequestHeader(name = "password") String password) {
         authenticationService.authenticateUser(username, password);
         trainingService.create(requestBody);
         return ResponseEntity.ok("Training has been added");

@@ -9,9 +9,11 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UsernamePasswordDto {
+public class UsernamePasswordTokenDto {
 
     private String username;
 
     private String password;
+
+    private String token;
 }

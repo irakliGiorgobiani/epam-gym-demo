@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.security.auth.login.CredentialNotFoundException;
 import java.util.List;
 
 @RestController
@@ -33,8 +32,7 @@ public class TrainingTypeController {
             @ApiResponse(responseCode = "401", description = "Invalid Username or password"),
     })
     public ResponseEntity<List<TrainingTypeDto>> getAll(@RequestHeader(name = "username") String username,
-                                                        @RequestHeader(name = "password") String password)
-            throws CredentialNotFoundException {
+                                                        @RequestHeader(name = "password") String password) {
         authenticationService.authenticateUser(username, password);
         return ResponseEntity.ok(trainingTypeService.getAll());
     }

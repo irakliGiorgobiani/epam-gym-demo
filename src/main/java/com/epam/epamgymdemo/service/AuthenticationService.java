@@ -1,34 +1,24 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.exception.EntityNotFoundException;
-import com.epam.epamgymdemo.model.dto.UsernamePasswordDto;
-import com.epam.epamgymdemo.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import lombok.Generated;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
-
-import javax.security.auth.login.CredentialNotFoundException;
 
 @Service
 @AllArgsConstructor
+@Generated
 public class AuthenticationService {
 
-    private final UserRepository userRepository;
+    private final AuthenticationManager authenticationManager;
 
-    public void authenticateUser(String username, String password) throws CredentialNotFoundException {
-        if (!isValidUser(username, password)) {
-            throw new CredentialNotFoundException("Invalid username or password");
-        }
-    }
-
-    public boolean isValidUser(String username, String password) {
-        var user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException
-                        (String.format("User not found with the username: %s", username)));
-
-        return user != null && user.getPassword().equals(password);
-    }
-
-    public UsernamePasswordDto usernamePassword(String username, String password) {
-        return UsernamePasswordDto.builder().username(username).password(password).build();
+    public void authenticateUser(String username, String password) {
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        username,
+                        password
+                )
+        );
     }
 }

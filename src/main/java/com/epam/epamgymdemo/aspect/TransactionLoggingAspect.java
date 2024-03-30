@@ -17,7 +17,7 @@ public class TransactionLoggingAspect {
 
     private final ThreadLocal<String> transactionId = new ThreadLocal<>();
 
-    @Before("execution(* com.epam.epamgymdemo..*.*(..))")
+    @Before("execution(* com.epam.epamgymdemo..*.*(..)) && !execution(* com.epam.epamgymdemo.filter..*.*(..))")
     public void generateTransactionId() {
         String newTransactionId = UUID.randomUUID().toString();
         transactionId.set(newTransactionId);
@@ -28,7 +28,7 @@ public class TransactionLoggingAspect {
         log.info("TransactionId: {}", transactionId);
     }
 
-    @After("execution(* com.epam.epamgymdemo..*.*(..))")
+    @After("execution(* com.epam.epamgymdemo..*.*(..)) && !execution(* com.epam.epamgymdemo.filter..*.*(..))")
     public void clearTransactionId() {
         transactionId.remove();
     }

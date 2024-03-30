@@ -16,7 +16,7 @@ import java.util.Arrays;
 @Slf4j
 public class RestCallLoggingAspect {
 
-    @Before("execution(* com.epam.epamgymdemo.controller..*.*(..))")
+    @Before("execution(* com.epam.epamgymdemo.controller..*.*(..)) ")
     public void logRestCallDetails(JoinPoint joinPoint) {
         String methodName = joinPoint.getSignature().getName();
         Object[] args = joinPoint.getArgs();

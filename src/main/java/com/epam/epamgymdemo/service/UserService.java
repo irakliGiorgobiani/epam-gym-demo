@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,8 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
 
     private final UsernamePasswordGenerator usernamePasswordGenerator;
+
+    private final PasswordEncoder passwordEncoder;
 
     private UserDto validateFields(UserDto userDto) {
         if (userDto.getFirstName() == null) {
@@ -69,7 +72,7 @@ public class UserService implements UserDetailsService {
                         .isActive(true)
                         .username(usernamePasswordGenerator.generateUsername
                                 (userDto.getFirstName(), userDto.getLastName()))
-                        .password(usernamePasswordGenerator.generatePassword())
+                        .password(passwordEncoder.encode(usernamePasswordGenerator.generatePassword()))
                         .build();
 
         userRepository.save(user);

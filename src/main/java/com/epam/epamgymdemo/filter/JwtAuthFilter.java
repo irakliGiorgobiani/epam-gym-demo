@@ -1,6 +1,7 @@
 package com.epam.epamgymdemo.filter;
 
 import com.epam.epamgymdemo.service.JwtService;
+import com.epam.epamgymdemo.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -22,7 +22,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
 
-    private final UserDetailsService userDetailsService;
+    private final UserService userService;
 
     @Override
     protected void doFilterInternal(
@@ -43,7 +43,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             final String username = jwtService.extractUsername(jwt);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                UserDetails userDetails = userService.loadUserByUsername(username);
 
                 if (jwtService.isTokenValid(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(

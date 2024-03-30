@@ -132,6 +132,7 @@
                         <exclude>com/epam/epamgymdemo/health/*</exclude>
                         <exclude>com/epam/epamgymdemo/health/*</exclude>
                         <exclude>com/epam/epamgymdemo/metrics/*</exclude>
+                        <exclude>com/epam/epamgymdemo/filter/*</exclude>
                     </excludes>
                 </configuration>
                 <executions>

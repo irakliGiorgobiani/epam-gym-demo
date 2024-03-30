@@ -21,7 +21,6 @@ public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationF
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException, ServletException {
-        this.setDefaultFailureUrl("/auth/v1/login-error");
         String username = request.getParameter("username");
         int attempts = loginAttemptsCache.getOrDefault(username, 0) + 1;
         loginAttemptsCache.put(username, attempts);
@@ -33,7 +32,7 @@ public class CustomAuthenticationFailureHandler extends SimpleUrlAuthenticationF
             response.sendRedirect("auth/v1/login-error");
             return;
         }
-        response.sendRedirect("auth/v1/login-error");
+        this.setDefaultFailureUrl("/auth/v1/login-error");
         super.onAuthenticationFailure(request, response, exception);
     }
 }

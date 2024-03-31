@@ -6,7 +6,6 @@ import com.epam.epamgymdemo.model.dto.TrainerDto;
 import com.epam.epamgymdemo.model.dto.TrainerTrainingDto;
 import com.epam.epamgymdemo.model.dto.TrainerWithListDto;
 import com.epam.epamgymdemo.model.dto.UsernamePasswordTokenDto;
-import com.epam.epamgymdemo.service.AuthenticationService;
 import com.epam.epamgymdemo.service.JwtService;
 import com.epam.epamgymdemo.service.TrainerService;
 import com.epam.epamgymdemo.service.UserService;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,8 +32,6 @@ import java.util.List;
 @AllArgsConstructor
 @RequestMapping("/trainer/v1")
 public class TrainerController {
-
-    private final AuthenticationService authenticationService;
 
     private final UserService userService;
 
@@ -68,10 +64,7 @@ public class TrainerController {
             @ApiResponse(responseCode = "404",
                     description = "The trainer instance with the given username does not exist")
     })
-    public ResponseEntity<TrainerWithListDto> get(@PathVariable String username,
-                                   @RequestHeader(name = "username") String usernameAuth,
-                                   @RequestHeader(name = "password") String password) {
-        authenticationService.authenticateUser(usernameAuth, password);
+    public ResponseEntity<TrainerWithListDto> get(@PathVariable String username) {
         return ResponseEntity.ok(trainerService.get(username));
     }
 
@@ -86,10 +79,7 @@ public class TrainerController {
                     description = "The trainer instance with the given username does not exist")
     })
     public ResponseEntity<TrainerWithListDto> update(@PathVariable String username,
-                                                     @RequestHeader(name = "username") String usernameAuth,
-                                                     @RequestHeader(name = "password") String password,
                                                      @RequestBody TrainerDto requestBody) {
-        authenticationService.authenticateUser(usernameAuth, password);
         userService.update(username, requestBody);
         return ResponseEntity.ok(trainerService.update(username));
     }
@@ -107,11 +97,8 @@ public class TrainerController {
     public ResponseEntity<List<TrainerTrainingDto>> getTrainingList(@PathVariable String username,
                                                                     @RequestParam(required = false) LocalDate fromDate,
                                                                     @RequestParam(required = false) LocalDate toDate,
-                                                                    @RequestParam(required = false) String traineeName,
-                                                                    @RequestHeader(name = "username")
-                                                                        String usernameAuth,
-                                                                    @RequestHeader(name = "password") String password) {
-        authenticationService.authenticateUser(usernameAuth, password);
+                                                                    @RequestParam(required = false) String traineeName)
+    {
         return ResponseEntity.ok(trainerService.getTrainingsByUsernameAndCriteria(username, fromDate,
                 toDate, traineeName));
     }
@@ -127,10 +114,7 @@ public class TrainerController {
                     description = "The trainer instance with the given username does not exist")
     })
     public ResponseEntity<ActiveDto> changeActive(@PathVariable String username,
-                                                    @PathVariable Boolean isActive,
-                                                    @RequestHeader(name = "username") String usernameAuth,
-                                                    @RequestHeader(name = "password") String password) {
-        authenticationService.authenticateUser(usernameAuth, password);
+                                                    @PathVariable Boolean isActive) {
         return ResponseEntity.ok(userService.changeActive(username, isActive));
     }
 }

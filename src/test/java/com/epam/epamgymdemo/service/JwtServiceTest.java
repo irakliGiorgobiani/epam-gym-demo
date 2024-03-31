@@ -24,5 +24,19 @@ public class JwtServiceTest {
         String token = jwtService.generateToken(userDetails);
         assertNotNull(token);
     }
+
+    @Test
+    void testTokenBlacklisting() {
+        JwtService jwtService = new JwtService();
+
+        UserDetails userDetails = User.withUsername("testuser").password("password").roles("USER").build();
+        String token = jwtService.generateToken(userDetails);
+
+        assertFalse(jwtService.isTokenBlacklisted(token));
+
+        jwtService.addToTokenBlacklist(token);
+
+        assertTrue(jwtService.isTokenBlacklisted(token));
+    }
 }
 

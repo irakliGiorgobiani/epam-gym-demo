@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import javax.security.auth.login.CredentialNotFoundException;
+
 @RestController
 @AllArgsConstructor
 @RequestMapping("/login/v1")
@@ -38,8 +40,9 @@ public class LoginController {
             @ApiResponse(responseCode = "401", description = "Failed to validate credentials")
     })
     public ResponseEntity<UsernamePasswordTokenDto> login(@RequestHeader(name = "username") String username,
-                                                          @RequestHeader(name = "password") String password) {
-        authenticationService.authenticateUser(username, password);
+                                                          @RequestHeader(name = "password") String password)
+            throws CredentialNotFoundException {
+        authenticationService.checkCredentials(username, password);
         return ResponseEntity.ok(userService.usernameAndPassword(userService.getByUsername(username),
                 jwtService));
     }
@@ -53,9 +56,7 @@ public class LoginController {
             @ApiResponse(responseCode = "401", description = "Failed to authorize")
     })
     public ResponseEntity<UsernamePasswordTokenDto> changePassword(@RequestHeader(name = "username") String username,
-                                                                   @RequestHeader(name = "password") String oldPassword,
                                                                    @RequestBody String newPassword) {
-        authenticationService.authenticateUser(username, oldPassword);
         userService.changePassword(username, newPassword);
         return ResponseEntity.ok(userService.usernameAndPassword(userService.getByUsername(username), jwtService));
     }

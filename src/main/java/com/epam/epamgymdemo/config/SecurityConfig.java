@@ -1,7 +1,8 @@
 package com.epam.epamgymdemo.config;
 
-import com.epam.epamgymdemo.exception.CustomAuthenticationFailureHandler;
 import com.epam.epamgymdemo.filter.JwtAuthFilter;
+import com.epam.epamgymdemo.service.JwtService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,9 +31,9 @@ public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
 
-    private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
-
     private final PasswordEncoder passwordEncoder;
+
+    private final JwtService jwtService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -40,11 +41,21 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(a -> a.requestMatchers("/trainee/v1/register",
-                                "/trainer/v1/register").permitAll()
+                                "/trainer/v1/register", "/login/v1").permitAll()
                         .anyRequest().authenticated())
-                .formLogin(login -> login.loginPage("login").failureHandler(customAuthenticationFailureHandler)
+                .logout(logout -> logout.logoutUrl("/logout")
+                        .addLogoutHandler((request, response, authentication) -> {
+                            String authorizationHeader = request.getHeader("Authorization");
+
+                            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                                String jwtToken = authorizationHeader.substring(7);
+
+                                jwtService.addToTokenBlacklist(jwtToken);
+                            }
+                        })
+                        .logoutSuccessHandler((request, response, authentication) ->
+                                response.setStatus(HttpServletResponse.SC_OK))
                         .permitAll())
-                .logout(logout -> logout.logoutUrl("auth/v1/logout").logoutSuccessUrl("auth/v1/login").permitAll())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

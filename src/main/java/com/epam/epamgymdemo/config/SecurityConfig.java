@@ -48,9 +48,7 @@ public class SecurityConfig {
                             String authorizationHeader = request.getHeader("Authorization");
 
                             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                                String jwtToken = authorizationHeader.substring(7);
-
-                                jwtService.addToTokenBlacklist(jwtToken);
+                                jwtService.addToTokenBlacklist(authorizationHeader.substring(7));
                             }
                         })
                         .logoutSuccessHandler((request, response, authentication) ->

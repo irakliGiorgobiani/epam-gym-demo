@@ -13,23 +13,27 @@ public class JwtServiceTest {
 
     private JwtService jwtService;
 
+    private final String username = "testUser";
+
+    private final String password = "password";
+
     @BeforeEach
-    public void setup() {
+    public void setUp() {
         jwtService = new JwtService();
     }
 
     @Test
     public void testGenerateToken() {
-        UserDetails userDetails = new User("testUser", "password", Collections.emptyList());
+        UserDetails userDetails = new User(username, password, Collections.emptyList());
+
         String token = jwtService.generateToken(userDetails);
+
         assertNotNull(token);
     }
 
     @Test
     void testTokenBlacklisting() {
-        JwtService jwtService = new JwtService();
-
-        UserDetails userDetails = User.withUsername("testuser").password("password").roles("USER").build();
+        UserDetails userDetails = User.withUsername(username).password(password).roles("USER").build();
         String token = jwtService.generateToken(userDetails);
 
         assertFalse(jwtService.isTokenBlacklisted(token));

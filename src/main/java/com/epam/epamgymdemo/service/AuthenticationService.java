@@ -7,6 +7,7 @@ import com.epam.epamgymdemo.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,10 +21,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthenticationService {
 
-    public static final int MAX_ATTEMPT = 3;
+    @Value("${MAX_ATTEMPT}")
+    private int MAX_ATTEMPT;
 
     private final UserRepository userRepository;
+
     private final BCryptPasswordEncoder passwordEncoder;
+
     private final HttpServletRequest httpRequest;
 
     public void checkCredentials(String username, String password) throws CredentialNotFoundException {
@@ -48,7 +52,7 @@ public class AuthenticationService {
                 .orElseThrow(() -> new EntityNotFoundException
                         (String.format("User not found with the username: %s", username)));
 
-        if (!(username.equals(user.getUsername()) && passwordEncoder.matches(password, user.getPassword()))) {
+        if (!(username.equals(user.getUsername()) || !passwordEncoder.matches(password, user.getPassword()))) {
             attemptCount++;
             attempts.put(session.getId(), attemptCount);
 

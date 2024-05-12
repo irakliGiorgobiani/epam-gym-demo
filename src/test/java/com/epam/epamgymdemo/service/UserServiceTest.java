@@ -45,11 +45,14 @@ class UserServiceTest {
 
     @Test
     void testUsernamePasswordDto() {
-        User user = User.builder().firstName("test").lastName("coverage").username("testCoverage").isActive(true).build();
+        String username = "testCoverage";
+
+        User user = User.builder().firstName("test").lastName("coverage").username(username).isActive(true).build();
 
         UsernamePasswordTokenDto usernamePasswordTokenDto = userService.usernameAndPassword(user, jwtService);
 
         assertNotNull(usernamePasswordTokenDto);
+        assertEquals(usernamePasswordTokenDto.getUsername(), username);
     }
 
     @Test

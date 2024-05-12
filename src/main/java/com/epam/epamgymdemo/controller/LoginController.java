@@ -1,7 +1,8 @@
 package com.epam.epamgymdemo.controller;
 
-import com.epam.epamgymdemo.model.dto.UsernamePasswordDto;
+import com.epam.epamgymdemo.model.dto.UsernamePasswordTokenDto;
 import com.epam.epamgymdemo.service.AuthenticationService;
+import com.epam.epamgymdemo.service.JwtService;
 import com.epam.epamgymdemo.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,6 +30,8 @@ public class LoginController {
 
     private final UserService userService;
 
+    private final JwtService jwtService;
+
     @GetMapping
     @Operation(summary = "Validate user credentials",
             description = "check if the username and password given in the request headers are valid")
@@ -36,11 +39,12 @@ public class LoginController {
             @ApiResponse(responseCode = "200", description = "Successfully validated credentials"),
             @ApiResponse(responseCode = "401", description = "Failed to validate credentials")
     })
-    public ResponseEntity<UsernamePasswordDto> login(@RequestHeader(name = "username") String username,
-                                                     @RequestHeader(name = "password") String password)
+    public ResponseEntity<UsernamePasswordTokenDto> login(@RequestHeader(name = "username") String username,
+                                                          @RequestHeader(name = "password") String password)
             throws CredentialNotFoundException {
-        authenticationService.authenticateUser(username, password);
-        return ResponseEntity.ok(authenticationService.usernamePassword(username, password));
+        authenticationService.checkCredentials(username, password);
+        return ResponseEntity.ok(userService.usernameAndPassword(userService.getByUsername(username),
+                jwtService));
     }
 
     @PostMapping("/change-password")
@@ -51,12 +55,9 @@ public class LoginController {
             @ApiResponse(responseCode = "200", description = "Successfully changed user password"),
             @ApiResponse(responseCode = "401", description = "Failed to authorize")
     })
-    public ResponseEntity<UsernamePasswordDto> changePassword(@RequestHeader(name = "username") String username,
-                                                              @RequestHeader(name = "password") String oldPassword,
-                                                              @RequestBody String newPassword)
-            throws CredentialNotFoundException {
-        authenticationService.authenticateUser(username, oldPassword);
+    public ResponseEntity<UsernamePasswordTokenDto> changePassword(@RequestHeader(name = "username") String username,
+                                                                   @RequestBody String newPassword) {
         userService.changePassword(username, newPassword);
-        return ResponseEntity.ok(authenticationService.usernamePassword(username, newPassword));
+        return ResponseEntity.ok(userService.usernameAndPassword(userService.getByUsername(username), jwtService));
     }
 }

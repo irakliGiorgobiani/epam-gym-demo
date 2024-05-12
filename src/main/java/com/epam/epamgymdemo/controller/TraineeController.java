@@ -6,8 +6,8 @@ import com.epam.epamgymdemo.model.dto.ActiveDto;
 import com.epam.epamgymdemo.model.dto.TraineeDto;
 import com.epam.epamgymdemo.model.dto.TrainerDto;
 import com.epam.epamgymdemo.model.dto.TraineeTrainingDto;
-import com.epam.epamgymdemo.model.dto.UsernamePasswordDto;
-import com.epam.epamgymdemo.service.AuthenticationService;
+import com.epam.epamgymdemo.model.dto.UsernamePasswordTokenDto;
+import com.epam.epamgymdemo.service.JwtService;
 import com.epam.epamgymdemo.service.TraineeService;
 import com.epam.epamgymdemo.service.TrainerService;
 import com.epam.epamgymdemo.service.TrainingTypeService;
@@ -26,12 +26,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.security.auth.login.CredentialNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -43,8 +41,6 @@ import java.util.Set;
         description = "Operations for creating, updating, retrieving and deleting trainees in the application")
 public class TraineeController {
 
-    private final AuthenticationService authenticationService;
-
     private final UserService userService;
 
     private final TraineeService traineeService;
@@ -52,6 +48,8 @@ public class TraineeController {
     private final TrainerService trainerService;
 
     private final TrainingTypeService trainingTypeService;
+
+    private final JwtService jwtService;
 
     @PostMapping("/register")
     @Transactional
@@ -63,10 +61,10 @@ public class TraineeController {
             @ApiResponse(responseCode = "400", description = "Either naming is not valid or " +
                     "at least one field was not given")
     })
-    public ResponseEntity<UsernamePasswordDto> register(@RequestBody TraineeDto requestBody) {
+    public ResponseEntity<UsernamePasswordTokenDto> register(@RequestBody TraineeDto requestBody) {
         User user = userService.create(requestBody);
         traineeService.create(user.getId(), requestBody);
-        return ResponseEntity.ok(userService.usernameAndPassword(user));
+        return ResponseEntity.ok(userService.usernameAndPassword(user, jwtService));
     }
 
     @GetMapping("/{username}")
@@ -80,11 +78,7 @@ public class TraineeController {
             @ApiResponse(responseCode = "404",
                     description = "The trainee instance with the given username does not exist")
     })
-    public ResponseEntity<TraineeDto> get(@PathVariable String username,
-                                   @RequestHeader(name = "username") String usernameAuth,
-                                   @RequestHeader(name = "password") String password)
-            throws CredentialNotFoundException {
-        authenticationService.authenticateUser(usernameAuth, password);
+    public ResponseEntity<TraineeDto> get(@PathVariable String username) {
         return ResponseEntity.ok(traineeService.get(username));
     }
 
@@ -99,11 +93,7 @@ public class TraineeController {
                     description = "The trainee instance with the given username does not exist")
     })
     public ResponseEntity<TraineeDto> update(@PathVariable String username,
-                                      @RequestHeader(name = "username") String usernameAuth,
-                                      @RequestHeader(name = "password") String password,
-                                      @RequestBody TraineeDto requestBody)
-            throws CredentialNotFoundException {
-        authenticationService.authenticateUser(usernameAuth, password);
+                                      @RequestBody TraineeDto requestBody) {
         userService.update(username, requestBody);
         return ResponseEntity.ok(traineeService.update(username, requestBody));
     }
@@ -119,11 +109,7 @@ public class TraineeController {
             @ApiResponse(responseCode = "404",
                     description = "The trainee instance with the given username does not exist")
     })
-    public ResponseEntity<TraineeDto> delete(@PathVariable String username,
-                                         @RequestHeader(name = "username") String usernameAuth,
-                                         @RequestHeader(name = "password") String password)
-            throws CredentialNotFoundException {
-        authenticationService.authenticateUser(usernameAuth, password);
+    public ResponseEntity<TraineeDto> delete(@PathVariable String username) {
         return ResponseEntity.ok(traineeService.delete(username));
     }
 
@@ -138,11 +124,7 @@ public class TraineeController {
             @ApiResponse(responseCode = "404",
                     description = "The trainee instance with the given username does not exist")
     })
-    public ResponseEntity<Set<TrainerDto>> getNotAssignedTrainers (@PathVariable String username,
-                                                   @RequestHeader(name = "username") String usernameAuth,
-                                                   @RequestHeader(name = "password") String password)
-            throws CredentialNotFoundException {
-        authenticationService.authenticateUser(usernameAuth, password);
+    public ResponseEntity<Set<TrainerDto>> getNotAssignedTrainers (@PathVariable String username) {
         return ResponseEntity.ok(traineeService.getUnassignedActiveTrainers(username));
     }
 
@@ -158,11 +140,7 @@ public class TraineeController {
                     description = "The trainee instance with the given username does not exist")
     })
     public ResponseEntity<Set<TrainerDto>> updateTrainerList(@PathVariable String username,
-                                             @RequestBody List<String> trainerUsernames,
-                                             @RequestHeader(name = "username") String usernameAuth,
-                                             @RequestHeader(name = "password") String password)
-            throws CredentialNotFoundException {
-        authenticationService.authenticateUser(usernameAuth, password);
+                                             @RequestBody List<String> trainerUsernames) {
         return ResponseEntity.ok(traineeService
                 .addTrainerToTrainersList(username, trainerService.getByUsernames(trainerUsernames)));
     }
@@ -182,12 +160,7 @@ public class TraineeController {
                                                                     @RequestParam(required = false) LocalDate toDate,
                                                                     @RequestParam(required = false) String trainerName,
                                                                     @RequestParam(required = false,
-                                                                 name = "trainingType") String typeName,
-                                                                    @RequestHeader(name = "username")
-                                                                        String usernameAuth,
-                                                                    @RequestHeader(name = "password") String password)
-            throws CredentialNotFoundException {
-        authenticationService.authenticateUser(usernameAuth, password);
+                                                                 name = "trainingType") String typeName) {
         return ResponseEntity.ok(traineeService.getTrainingsByUsernameAndCriteria(username, fromDate,
                 toDate, trainerName, trainingTypeService.getTrainingTypeByName(typeName)));
     }
@@ -202,11 +175,7 @@ public class TraineeController {
             @ApiResponse(responseCode = "404", description = "The trainee instance with the given username does not exist")
     })
     public ResponseEntity<ActiveDto> changeActive(@PathVariable String username,
-                                                  @PathVariable Boolean isActive,
-                                                  @RequestHeader(name = "username") String usernameAuth,
-                                                  @RequestHeader(name = "password") String password)
-            throws CredentialNotFoundException {
-        authenticationService.authenticateUser(usernameAuth, password);
+                                                  @PathVariable Boolean isActive) {
         return ResponseEntity.ok(userService.changeActive(username, isActive));
     }
 }

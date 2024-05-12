@@ -3,13 +3,14 @@ package com.epam.epamgymdemo.service;
 import com.epam.epamgymdemo.generator.UsernamePasswordGenerator;
 import com.epam.epamgymdemo.model.bo.User;
 import com.epam.epamgymdemo.model.dto.UserDto;
-import com.epam.epamgymdemo.model.dto.UsernamePasswordDto;
+import com.epam.epamgymdemo.model.dto.UsernamePasswordTokenDto;
 import com.epam.epamgymdemo.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,16 +34,25 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private JwtService jwtService;
+
+    @Mock
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+
     @InjectMocks
     private UserService userService;
 
     @Test
     void testUsernamePasswordDto() {
-        User user = User.builder().firstName("test").lastName("coverage").username("testCoverage").isActive(true).build();
+        String username = "testCoverage";
 
-        UsernamePasswordDto usernamePasswordDto = userService.usernameAndPassword(user);
+        User user = User.builder().firstName("test").lastName("coverage").username(username).isActive(true).build();
 
-        assertNotNull(usernamePasswordDto);
+        UsernamePasswordTokenDto usernamePasswordTokenDto = userService.usernameAndPassword(user, jwtService);
+
+        assertNotNull(usernamePasswordTokenDto);
+        assertEquals(usernamePasswordTokenDto.getUsername(), username);
     }
 
     @Test

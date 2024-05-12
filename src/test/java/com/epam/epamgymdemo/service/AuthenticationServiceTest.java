@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.security.auth.login.CredentialNotFoundException;
@@ -37,7 +38,6 @@ class AuthenticationServiceTest {
     @Mock
     private HttpServletRequest httpRequest;
 
-    @Mock
     private HttpSession session;
 
     private String username;
@@ -57,6 +57,13 @@ class AuthenticationServiceTest {
         user = new User();
         user.setUsername(username);
         user.setPassword("encodedPassword");
+
+        session = new MockHttpSession();
+
+        Map<String, Integer> attempts = new HashMap<>();
+        attempts.put(session.getId(), MAX_ATTEMPT - 1);
+
+        session.setAttribute("attempts", attempts);
     }
 
     @Test
@@ -64,11 +71,7 @@ class AuthenticationServiceTest {
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(password, user.getPassword())).thenReturn(false);
 
-        Map<String, Integer> attempts = new HashMap<>();
-        attempts.put(session.getId(), MAX_ATTEMPT - 1);
-
         when(httpRequest.getSession(true)).thenReturn(session);
-        when(session.getAttribute("attempts")).thenReturn(attempts);
 
         assertThrows(BruteForceException.class, () -> authenticationService.checkCredentials(username, password));
     }
@@ -78,11 +81,7 @@ class AuthenticationServiceTest {
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(password, user.getPassword())).thenReturn(true);
 
-        Map<String, Integer> attempts = new HashMap<>();
-        attempts.put(session.getId(), MAX_ATTEMPT - 1);
-
         when(httpRequest.getSession(true)).thenReturn(session);
-        when(session.getAttribute("attempts")).thenReturn(attempts);
 
         authenticationService.checkCredentials(username, password);
     }

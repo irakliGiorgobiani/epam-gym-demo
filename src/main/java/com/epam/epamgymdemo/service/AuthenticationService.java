@@ -46,13 +46,17 @@ public class AuthenticationService {
             throw new BruteForceException("You are blocked for another " +
                     Duration.between(LocalDateTime.now(), (LocalDateTime) session.getAttribute("blockedUntil"))
                             .toMinutes() + " minutes");
+        } else if (session.getAttribute("blockedUntil") != null &&
+                LocalDateTime.now().isAfter((LocalDateTime) session.getAttribute("blockedUntil"))) {
+            attempts.put(session.getId(), 0);
+            session.removeAttribute("blockedUntil");
         }
 
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException
                         (String.format("User not found with the username: %s", username)));
 
-        if (!(username.equals(user.getUsername()) || !passwordEncoder.matches(password, user.getPassword()))) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             attemptCount++;
             attempts.put(session.getId(), attemptCount);
 
@@ -62,9 +66,6 @@ public class AuthenticationService {
             }
 
             throw new CredentialNotFoundException("Incorrect username or password, try again");
-        } else {
-            attempts.put(session.getId(), 0);
-            session.removeAttribute("blockedUntil");
         }
     }
 }

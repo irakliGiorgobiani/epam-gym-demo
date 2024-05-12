@@ -27,7 +27,8 @@ public class RestCallLoggingAspect {
             returning = "result")
     public void logRestCallResponse(Object result) {
         if (result instanceof ResponseEntity<?> responseEntity) {
-            log.info("REST call response: status={}, body={}", responseEntity.getStatusCode().value(), responseEntity.getBody());
+            log.info("REST call response: status={}, body={}", responseEntity.getStatusCode().value(),
+                    responseEntity.getBody());
         }
     }
 

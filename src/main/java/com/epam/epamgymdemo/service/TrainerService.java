@@ -1,6 +1,7 @@
 package com.epam.epamgymdemo.service;
 
 import com.epam.epamgymdemo.exception.EntityNotFoundException;
+import com.epam.epamgymdemo.metrics.CustomMetrics;
 import com.epam.epamgymdemo.model.bo.User;
 import com.epam.epamgymdemo.model.bo.TrainingType;
 import com.epam.epamgymdemo.model.bo.Trainer;
@@ -36,6 +37,8 @@ public class TrainerService {
 
     private final UserRepository userRepository;
 
+    private final CustomMetrics customMetrics;
+
     private TrainerWithListDto convertTrainerToTrainerWithListDto(Trainer trainer) {
         return TrainerWithListDto.builder()
                 .firstName(trainer.getUser().getFirstName())
@@ -60,6 +63,8 @@ public class TrainerService {
                 .build();
 
         trainerRepository.save(trainer);
+
+        customMetrics.incrementTrainerCounter();
 
         log.info(String.format("Trainer with the id: %d successfully created", trainer.getId()));
     }

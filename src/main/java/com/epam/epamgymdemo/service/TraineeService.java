@@ -1,6 +1,7 @@
 package com.epam.epamgymdemo.service;
 
 import com.epam.epamgymdemo.exception.EntityNotFoundException;
+import com.epam.epamgymdemo.metrics.CustomMetrics;
 import com.epam.epamgymdemo.model.bo.Trainee;
 import com.epam.epamgymdemo.model.bo.Trainer;
 import com.epam.epamgymdemo.model.bo.Training;
@@ -34,6 +35,8 @@ public class TraineeService {
 
     private final UserRepository userRepository;
 
+    private final CustomMetrics customMetrics;
+
     private TraineeDto convertTraineeToTraineeDto(Trainee trainee) {
         return TraineeDto.builder()
                 .firstName(trainee.getUser().getFirstName())
@@ -57,6 +60,8 @@ public class TraineeService {
                 .build();
 
         traineeRepository.save(trainee);
+
+        customMetrics.incrementTraineeCounter();
 
         log.info(String.format("Trainee with the id: %d successfully created", trainee.getId()));
     }
@@ -104,6 +109,8 @@ public class TraineeService {
 
         userRepository.deleteById(trainee.getUser().getId());
         traineeRepository.deleteById(trainee.getId());
+
+        customMetrics.decrementTraineeCounter();
 
         log.info(String.format("Trainee with the username: %s successfully deleted", username));
 

@@ -40,7 +40,7 @@ public class SecurityConfig {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(a -> a.requestMatchers("/trainee/v1/register",
+                .authorizeHttpRequests(a -> a.requestMatchers("/", "/eureka/**", "/trainee/v1/register",
                                 "/trainer/v1/register", "/login/v1").permitAll()
                         .anyRequest().authenticated())
                 .logout(logout -> logout.logoutUrl("/logout")

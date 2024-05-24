@@ -1,5 +1,6 @@
 package com.epam.epamgymdemo.service;
 
+import com.epam.epamgymdemo.epamgymreporter.feignclient.ReporterClient;
 import com.epam.epamgymdemo.exception.EntityNotFoundException;
 import com.epam.epamgymdemo.metrics.CustomMetrics;
 import com.epam.epamgymdemo.model.bo.Trainee;
@@ -7,6 +8,7 @@ import com.epam.epamgymdemo.model.bo.Trainer;
 import com.epam.epamgymdemo.model.bo.Training;
 import com.epam.epamgymdemo.model.bo.TrainingType;
 import com.epam.epamgymdemo.model.bo.User;
+import com.epam.epamgymdemo.model.dto.ReporterTrainingDto;
 import com.epam.epamgymdemo.model.dto.TraineeDto;
 import com.epam.epamgymdemo.model.dto.TrainerDto;
 import com.epam.epamgymdemo.model.dto.TraineeTrainingDto;
@@ -36,6 +38,8 @@ public class TraineeService {
     private final UserRepository userRepository;
 
     private final CustomMetrics customMetrics;
+
+    private final ReporterClient reporterClient;
 
     private TraineeDto convertTraineeToTraineeDto(Trainee trainee) {
         return TraineeDto.builder()
@@ -106,6 +110,23 @@ public class TraineeService {
     public TraineeDto delete(String username) {
         Trainee trainee = this.getByUsername(username);
         TraineeDto traineeDto = convertTraineeToTraineeDto(trainee);
+
+        List<Training> trainings = trainingRepository.findTrainings(username, null,
+                null, null, null);
+
+        for (Training training : trainings) {
+            reporterClient.saveTraining(ReporterTrainingDto.builder()
+                    .username(training.getTrainer().getUser().getUsername())
+                    .firstName(training.getTrainer().getUser().getFirstName())
+                    .lastName(training.getTrainer().getUser().getLastName())
+                    .active(training.getTrainer().getUser().getIsActive())
+                    .trainingDate(training.getTrainingDate())
+                    .trainingDuration(training.getTrainingDuration().doubleValue())
+                    .actionType("DELETE")
+                    .build());
+
+            trainingRepository.deleteById(training.getId());
+        }
 
         userRepository.deleteById(trainee.getUser().getId());
         traineeRepository.deleteById(trainee.getId());

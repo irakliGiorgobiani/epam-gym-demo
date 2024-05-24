@@ -13,27 +13,26 @@ public class JwtServiceTest {
 
     private JwtService jwtService;
 
-    private final String username = "testUser";
-
-    private final String password = "password";
+    private UserDetails userDetails;
+    private String token;
 
     @BeforeEach
     public void setUp() {
         jwtService = new JwtService();
+
+        userDetails = new User("username", "password", Collections.emptyList());
+
+        token = jwtService.generateToken(userDetails);
     }
 
     @Test
     public void testGenerateToken() {
-        UserDetails userDetails = new User(username, password, Collections.emptyList());
-
-        String token = jwtService.generateToken(userDetails);
-
         assertNotNull(token);
     }
 
     @Test
     void testTokenBlacklisting() {
-        UserDetails userDetails = User.withUsername(username).password(password).roles("USER").build();
+        userDetails = User.withUsername("username").password("password").roles("USER").build();
         String token = jwtService.generateToken(userDetails);
 
         assertFalse(jwtService.isTokenBlacklisted(token));
@@ -41,6 +40,18 @@ public class JwtServiceTest {
         jwtService.addToTokenBlacklist(token);
 
         assertTrue(jwtService.isTokenBlacklisted(token));
+    }
+
+    @Test
+    public void testExtractUsernameFromToken() {
+        String usernameFromToken = jwtService.extractUsername(token);
+
+        assertEquals(userDetails.getUsername(), usernameFromToken);
+    }
+
+    @Test
+    public void testValidateNonExpiredToken() {
+        assertTrue(jwtService.isTokenValid(token, userDetails));
     }
 }
 

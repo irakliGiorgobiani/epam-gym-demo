@@ -66,20 +66,29 @@ public class UserService implements UserDetailsService {
     public User create(UserDto createdUserDto) {
         UserDto userDto = validateFields(createdUserDto);
 
+        String password = usernamePasswordGenerator.generatePassword();
+
         User user = User.builder()
                         .firstName(userDto.getFirstName())
                         .lastName(userDto.getLastName())
                         .isActive(true)
                         .username(usernamePasswordGenerator.generateUsername
                                 (userDto.getFirstName(), userDto.getLastName()))
-                        .password(passwordEncoder.encode(usernamePasswordGenerator.generatePassword()))
+                        .password(passwordEncoder.encode(password))
                         .build();
 
         userRepository.save(user);
 
         log.info(String.format("User with the id: %d successfully created", user.getId()));
 
-        return user;
+        return User.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .isActive(user.getIsActive())
+                .username(user.getUsername())
+                .password(password)
+                .build();
     }
 
     @Transactional

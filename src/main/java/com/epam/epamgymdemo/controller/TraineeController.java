@@ -172,7 +172,8 @@ public class TraineeController {
             @ApiResponse(responseCode = "200", description = "Successfully changed the isActive field " +
                     "for the trainee with the given username"),
             @ApiResponse(responseCode = "401", description = "Invalid Username or password"),
-            @ApiResponse(responseCode = "404", description = "The trainee instance with the given username does not exist")
+            @ApiResponse(responseCode = "404", description = "The trainee instance with " +
+                    "the given username does not exist")
     })
     public ResponseEntity<ActiveDto> changeActive(@PathVariable String username,
                                                   @PathVariable Boolean isActive) {

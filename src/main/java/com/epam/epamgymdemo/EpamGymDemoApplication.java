@@ -4,6 +4,7 @@ import lombok.Generated;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.ComponentScan;
         "com.epam.epamgymdemo.health", "com.epam.epamgymdemo.metrics",
         "com.epam.epamgymdemo.filter"})
 @Generated
+@EnableFeignClients
 public class EpamGymDemoApplication {
 
     public static void main(String[] args) {

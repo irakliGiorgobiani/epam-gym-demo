@@ -1,5 +1,6 @@
 package com.epam.epamgymdemo.service;
 
+import com.epam.epamgymdemo.epamgymreporter.feignclient.ReporterClient;
 import com.epam.epamgymdemo.metrics.CustomMetrics;
 import com.epam.epamgymdemo.model.bo.Trainee;
 import com.epam.epamgymdemo.model.bo.Trainer;
@@ -43,6 +44,9 @@ class TraineeServiceTest {
 
     @Mock
     private CustomMetrics customMetrics;
+
+    @Mock
+    private ReporterClient reporterClient;
 
     @InjectMocks
     private TraineeService traineeService;

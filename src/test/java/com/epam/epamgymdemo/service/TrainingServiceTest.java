@@ -1,5 +1,6 @@
 package com.epam.epamgymdemo.service;
 
+import com.epam.epamgymdemo.epamgymreporter.feignclient.ReporterClient;
 import com.epam.epamgymdemo.model.bo.Trainee;
 import com.epam.epamgymdemo.model.bo.Trainer;
 import com.epam.epamgymdemo.model.bo.Training;
@@ -30,6 +31,9 @@ class TrainingServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ReporterClient reporterClient;
 
     @InjectMocks
     private TrainingService trainingService;

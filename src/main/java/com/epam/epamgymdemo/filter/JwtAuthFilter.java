@@ -24,6 +24,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final UserService userService;
 
+    private static final ThreadLocal<String> currentToken = new ThreadLocal<>();
+
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -54,6 +56,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
                     authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+                    currentToken.set(jwt);
                 }
             }
         } catch (Exception e) {
@@ -63,5 +67,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         }
         filterChain.doFilter(request, response);
+    }
+
+    public static String getCurrentToken() {
+        return currentToken.get();
     }
 }

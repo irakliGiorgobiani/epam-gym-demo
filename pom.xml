@@ -6,7 +6,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.2.2</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
     <groupId>com.epam</groupId>
     <artifactId>epam-gym-demo</artifactId>
@@ -110,6 +110,24 @@
             <version>31.0.1-jre</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+            <version>4.1.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <version>4.1.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+            <version>3.1.1</version>
+        </dependency>
+
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -136,7 +154,6 @@
                         <exclude>com/epam/epamgymdemo/exception/*</exclude>
                         <exclude>com/epam/epamgymdemo/model/**</exclude>
                         <exclude>com/epam/epamgymdemo/repository/*</exclude>
-                        <exclude>com/epam/epamgymdemo/health/*</exclude>
                         <exclude>com/epam/epamgymdemo/health/*</exclude>
                         <exclude>com/epam/epamgymdemo/metrics/*</exclude>
                         <exclude>com/epam/epamgymdemo/filter/*</exclude>

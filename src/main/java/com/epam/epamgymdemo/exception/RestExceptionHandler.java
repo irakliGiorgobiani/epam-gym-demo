@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import javax.security.auth.login.CredentialNotFoundException;
+import java.net.SocketTimeoutException;
 import java.time.LocalDateTime;
+import java.util.concurrent.TimeoutException;
 
 @RestControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
@@ -65,5 +67,27 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .build();
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
+
+    @ExceptionHandler(TimeoutException.class)
+    public ResponseEntity<ErrorResponse> handleTimeoutException(TimeoutException exception) {
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .status(HttpStatus.REQUEST_TIMEOUT.value())
+                .error(HttpStatus.REQUEST_TIMEOUT.getReasonPhrase())
+                .message(exception.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT).body(errorResponse);
+    }
+
+    @ExceptionHandler({SocketTimeoutException.class})
+    public ResponseEntity<ErrorResponse> handleSocketTimeoutException(SocketTimeoutException exception){
+        ErrorResponse response = ErrorResponse.builder()
+                .status(HttpStatus.GATEWAY_TIMEOUT.value())
+                .error("Gateway Timeout")
+                .message(exception.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT).body(response);
     }
 }

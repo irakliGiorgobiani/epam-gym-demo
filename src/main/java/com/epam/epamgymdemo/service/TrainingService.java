@@ -1,10 +1,12 @@
 package com.epam.epamgymdemo.service;
 
+import com.epam.epamgymdemo.epamgymreporter.feignclient.ReporterClient;
 import com.epam.epamgymdemo.exception.EntityNotFoundException;
 import com.epam.epamgymdemo.model.bo.Trainee;
 import com.epam.epamgymdemo.model.bo.Trainer;
 import com.epam.epamgymdemo.model.bo.Training;
 import com.epam.epamgymdemo.model.bo.User;
+import com.epam.epamgymdemo.model.dto.ReporterTrainingDto;
 import com.epam.epamgymdemo.model.dto.TrainingDto;
 import com.epam.epamgymdemo.repository.TrainingRepository;
 import com.epam.epamgymdemo.repository.UserRepository;
@@ -23,6 +25,8 @@ public class TrainingService {
     private final TrainingRepository trainingRepository;
 
     private final UserRepository userRepository;
+
+    private final ReporterClient reporterClient;
 
     @Transactional
     public void create(TrainingDto trainingDto) {
@@ -44,6 +48,16 @@ public class TrainingService {
 
         trainee.getTrainers().add(trainer);
         trainer.getTrainees().add(trainee);
+
+        reporterClient.saveTraining(ReporterTrainingDto.builder()
+                .username(trainer.getUser().getUsername())
+                .firstName(trainer.getUser().getFirstName())
+                .lastName(trainer.getUser().getLastName())
+                .active(trainer.getUser().getIsActive())
+                .trainingDate(training.getTrainingDate())
+                .trainingDuration(training.getTrainingDuration().doubleValue())
+                .actionType("ADD")
+                .build());
     }
 
     public List<Training> getAll() {

@@ -1,5 +1,7 @@
 package com.epam.epamgymdemo.service;
 
+import com.epam.epamgymdemo.converter.BoToDtoConverter;
+import com.epam.epamgymdemo.epamgymreporter.feignclient.ReporterClient;
 import com.epam.epamgymdemo.metrics.CustomMetrics;
 import com.epam.epamgymdemo.model.bo.Trainee;
 import com.epam.epamgymdemo.model.bo.Trainer;
@@ -43,6 +45,12 @@ class TraineeServiceTest {
 
     @Mock
     private CustomMetrics customMetrics;
+
+    @Mock
+    private ReporterClient reporterClient;
+
+    @Mock
+    private BoToDtoConverter boToDtoConverter;
 
     @InjectMocks
     private TraineeService traineeService;
@@ -145,11 +153,15 @@ class TraineeServiceTest {
                         .build()).trainingDate(LocalDate.now())
                 .trainee(trainee)
                 .build();
+        TraineeTrainingDto traineeTrainingDto = TraineeTrainingDto.builder()
+                .trainingName(training.getTrainingName())
+                .build();
         user.setTrainee(trainee);
 
         when(trainingRepository.findTrainings(user.getUsername(),
                 LocalDate.of(2020, 1, 1),
                 null, null, null)).thenReturn(List.of(training));
+        when(boToDtoConverter.trainingToTraineeTrainingDto(training)).thenReturn(traineeTrainingDto);
 
         List<TraineeTrainingDto> trainingsByUsernameAndCriteria = traineeService
                 .getTrainingsByUsernameAndCriteria(user.getUsername(),
@@ -184,10 +196,19 @@ class TraineeServiceTest {
                         .id(1L)
                         .build())
                 .build();
+        TrainerDto trainerDto = TrainerDto.builder()
+                .firstName(userTrainer.getFirstName())
+                .lastName(userTrainer.getLastName())
+                .isActive(userTrainer.getIsActive())
+                .username(userTrainer.getUsername())
+                .specializationId(trainer1.getTrainingType().getId())
+                .build();
+
         user.setTrainee(trainee);
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(user));
         trainee.getTrainers().add(trainer1);
+        when(boToDtoConverter.trainerToTrainerDto(trainer1)).thenReturn(trainerDto);
 
         Set<TrainerDto> trainersUnassignedToTrainee = traineeService.getUnassignedActiveTrainers(user.getUsername());
 

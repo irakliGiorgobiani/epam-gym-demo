@@ -1,6 +1,7 @@
 package com.epam.epamgymdemo.service;
 
 import com.epam.epamgymdemo.converter.BoToDtoConverter;
+import com.epam.epamgymdemo.epamgymreporter.messaging.TrainingSummaryReceiver;
 import com.epam.epamgymdemo.exception.EntityNotFoundException;
 import com.epam.epamgymdemo.metrics.CustomMetrics;
 import com.epam.epamgymdemo.model.bo.User;
@@ -9,6 +10,7 @@ import com.epam.epamgymdemo.model.bo.Trainer;
 import com.epam.epamgymdemo.model.bo.Training;
 import com.epam.epamgymdemo.model.dto.TrainerTrainingDto;
 import com.epam.epamgymdemo.model.dto.TrainerWithListDto;
+import com.epam.epamgymdemo.model.dto.TrainingSummaryDto;
 import com.epam.epamgymdemo.model.dto.UserDto;
 import com.epam.epamgymdemo.repository.TrainerRepository;
 import com.epam.epamgymdemo.repository.TrainingRepository;
@@ -41,6 +43,8 @@ public class TrainerService {
     private final CustomMetrics customMetrics;
 
     private final BoToDtoConverter boToDtoConverter;
+
+    private final TrainingSummaryReceiver trainingSummaryReceiver;
 
     @Transactional
     public void create(Long userId, Long typeId) {
@@ -129,5 +133,9 @@ public class TrainerService {
                         .isActive(t.getUser().getIsActive())
                         .build())
                 .collect(Collectors.toSet());
+    }
+
+    public TrainingSummaryDto getTrainingSummary(String username) {
+        return trainingSummaryReceiver.sendAndReceive(username);
     }
 }

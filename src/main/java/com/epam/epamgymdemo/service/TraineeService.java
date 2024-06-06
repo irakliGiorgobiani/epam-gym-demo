@@ -2,7 +2,7 @@ package com.epam.epamgymdemo.service;
 
 import com.epam.epamgymdemo.converter.BoToDtoConverter;
 import com.epam.epamgymdemo.exception.EntityNotFoundException;
-import com.epam.epamgymdemo.epamgymreporter.messaging.ReporterTrainingSender;
+import com.epam.epamgymdemo.epamgymreporter.messaging.ReporterTrainingDtoProducer;
 import com.epam.epamgymdemo.metrics.CustomMetrics;
 import com.epam.epamgymdemo.model.bo.Trainee;
 import com.epam.epamgymdemo.model.bo.Trainer;
@@ -40,7 +40,7 @@ public class TraineeService {
 
     private final CustomMetrics customMetrics;
 
-    private final ReporterTrainingSender reporterTrainingSender;
+    private final ReporterTrainingDtoProducer reporterTrainingDtoProducer;
 
     private final BoToDtoConverter boToDtoConverter;
 
@@ -106,7 +106,7 @@ public class TraineeService {
         trainingRepository.findTrainings(username, null,
                 null, null, null)
                 .forEach(training -> {
-            reporterTrainingSender.send(ReporterTrainingDto.builder()
+            reporterTrainingDtoProducer.send(ReporterTrainingDto.builder()
                     .username(training.getTrainer().getUser().getUsername())
                     .firstName(training.getTrainer().getUser().getFirstName())
                     .lastName(training.getTrainer().getUser().getLastName())

@@ -5,7 +5,6 @@ import com.epam.epamgymdemo.model.dto.ActiveDto;
 import com.epam.epamgymdemo.model.dto.TrainerDto;
 import com.epam.epamgymdemo.model.dto.TrainerTrainingDto;
 import com.epam.epamgymdemo.model.dto.TrainerWithListDto;
-import com.epam.epamgymdemo.model.dto.TrainingSummaryDto;
 import com.epam.epamgymdemo.model.dto.UsernamePasswordTokenDto;
 import com.epam.epamgymdemo.service.JwtService;
 import com.epam.epamgymdemo.service.TrainerService;
@@ -117,17 +116,5 @@ public class TrainerController {
     public ResponseEntity<ActiveDto> changeActive(@PathVariable String username,
                                                     @PathVariable Boolean isActive) {
         return ResponseEntity.ok(userService.changeActive(username, isActive));
-    }
-
-    @GetMapping("/{username}/training-summary")
-    @Operation(summary = "trainers' training summary",
-            description = "get a training summary for a trainer by providing a username")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "TrainingSummaryDto object was returned successfully"),
-            @ApiResponse(responseCode = "403", description = "Problem with serialization"),
-            @ApiResponse(responseCode = "500", description = "There is a problem with the reporter microservice")
-    })
-    public ResponseEntity<TrainingSummaryDto> getTrainingSummary(@PathVariable String username) {
-        return ResponseEntity.ok(trainerService.getTrainingSummary(username));
     }
 }

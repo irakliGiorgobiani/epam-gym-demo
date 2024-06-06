@@ -1,7 +1,6 @@
 package com.epam.epamgymdemo.service;
 
 import com.epam.epamgymdemo.converter.BoToDtoConverter;
-import com.epam.epamgymdemo.epamgymreporter.messaging.TrainingSummaryReceiver;
 import com.epam.epamgymdemo.exception.EntityNotFoundException;
 import com.epam.epamgymdemo.metrics.CustomMetrics;
 import com.epam.epamgymdemo.model.bo.User;
@@ -16,11 +15,15 @@ import com.epam.epamgymdemo.repository.TrainerRepository;
 import com.epam.epamgymdemo.repository.TrainingRepository;
 import com.epam.epamgymdemo.repository.TrainingTypeRepository;
 import com.epam.epamgymdemo.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.jms.JMSException;
+import jakarta.jms.TextMessage;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +47,7 @@ public class TrainerService {
 
     private final BoToDtoConverter boToDtoConverter;
 
-    private final TrainingSummaryReceiver trainingSummaryReceiver;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public void create(Long userId, Long typeId) {
@@ -135,7 +138,14 @@ public class TrainerService {
                 .collect(Collectors.toSet());
     }
 
-    public TrainingSummaryDto getTrainingSummary(String username) {
-        return trainingSummaryReceiver.sendAndReceive(username);
+    public TrainingSummaryDto processMonthlySummary(TrainingSummaryDto trainingSummaryDto) {
+        if(trainingSummaryDto != null) {
+            try {
+                return objectMapper.readValue(((TextMessage) trainingSummaryDto).getText(),
+                        TrainingSummaryDto.class);
+            } catch (JMSException | IOException e) {
+                throw new RuntimeException(e.getMessage());
+            }
+        } else throw new RuntimeException("Something went wrong, please try again");
     }
 }

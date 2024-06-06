@@ -1,7 +1,7 @@
 package com.epam.epamgymdemo.service;
 
 import com.epam.epamgymdemo.exception.EntityNotFoundException;
-import com.epam.epamgymdemo.epamgymreporter.messaging.ReporterTrainingSender;
+import com.epam.epamgymdemo.epamgymreporter.messaging.ReporterTrainingDtoProducer;
 import com.epam.epamgymdemo.model.bo.Trainee;
 import com.epam.epamgymdemo.model.bo.Trainer;
 import com.epam.epamgymdemo.model.bo.Training;
@@ -26,7 +26,7 @@ public class TrainingService {
 
     private final UserRepository userRepository;
 
-    private final ReporterTrainingSender reporterTrainingSender;
+    private final ReporterTrainingDtoProducer reporterTrainingDtoProducer;
 
     private User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
@@ -55,7 +55,7 @@ public class TrainingService {
         trainee.getTrainers().add(trainer);
         trainer.getTrainees().add(trainee);
 
-        reporterTrainingSender.send(ReporterTrainingDto.builder()
+        reporterTrainingDtoProducer.send(ReporterTrainingDto.builder()
                 .username(trainer.getUser().getUsername())
                 .firstName(trainer.getUser().getFirstName())
                 .lastName(trainer.getUser().getLastName())

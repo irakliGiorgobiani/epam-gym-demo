@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ReporterTrainingSender {
+public class ReporterTrainingDtoProducer {
 
     private static final String DB_OPERATIONS_QUEUE = "db.operations.queue";
 

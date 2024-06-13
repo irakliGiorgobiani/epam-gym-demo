@@ -1,7 +1,7 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.epamgymreporter.feignclient.ReporterClient;
 import com.epam.epamgymdemo.exception.EntityNotFoundException;
+import com.epam.epamgymdemo.epamgymreporter.messaging.ReporterTrainingDtoProducer;
 import com.epam.epamgymdemo.model.bo.Trainee;
 import com.epam.epamgymdemo.model.bo.Trainer;
 import com.epam.epamgymdemo.model.bo.Training;
@@ -26,7 +26,13 @@ public class TrainingService {
 
     private final UserRepository userRepository;
 
-    private final ReporterClient reporterClient;
+    private final ReporterTrainingDtoProducer reporterTrainingDtoProducer;
+
+    private User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException
+                        (String.format("User not found with the username: %s", username)));
+    }
 
     @Transactional
     public void create(TrainingDto trainingDto) {
@@ -49,7 +55,7 @@ public class TrainingService {
         trainee.getTrainers().add(trainer);
         trainer.getTrainees().add(trainee);
 
-        reporterClient.saveTraining(ReporterTrainingDto.builder()
+        reporterTrainingDtoProducer.send(ReporterTrainingDto.builder()
                 .username(trainer.getUser().getUsername())
                 .firstName(trainer.getUser().getFirstName())
                 .lastName(trainer.getUser().getLastName())
@@ -62,11 +68,5 @@ public class TrainingService {
 
     public List<Training> getAll() {
         return trainingRepository.findAll();
-    }
-
-    private User getUserByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException
-                        (String.format("User not found with the username: %s", username)));
     }
 }

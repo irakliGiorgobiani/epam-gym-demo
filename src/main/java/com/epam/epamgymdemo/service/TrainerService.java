@@ -9,16 +9,21 @@ import com.epam.epamgymdemo.model.bo.Trainer;
 import com.epam.epamgymdemo.model.bo.Training;
 import com.epam.epamgymdemo.model.dto.TrainerTrainingDto;
 import com.epam.epamgymdemo.model.dto.TrainerWithListDto;
+import com.epam.epamgymdemo.model.dto.TrainingSummaryDto;
 import com.epam.epamgymdemo.model.dto.UserDto;
 import com.epam.epamgymdemo.repository.TrainerRepository;
 import com.epam.epamgymdemo.repository.TrainingRepository;
 import com.epam.epamgymdemo.repository.TrainingTypeRepository;
 import com.epam.epamgymdemo.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.jms.JMSException;
+import jakarta.jms.TextMessage;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +46,8 @@ public class TrainerService {
     private final CustomMetrics customMetrics;
 
     private final BoToDtoConverter boToDtoConverter;
+
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public void create(Long userId, Long typeId) {
@@ -129,5 +136,16 @@ public class TrainerService {
                         .isActive(t.getUser().getIsActive())
                         .build())
                 .collect(Collectors.toSet());
+    }
+
+    public TrainingSummaryDto processMonthlySummary(TrainingSummaryDto trainingSummaryDto) {
+        if(trainingSummaryDto != null) {
+            try {
+                return objectMapper.readValue(((TextMessage) trainingSummaryDto).getText(),
+                        TrainingSummaryDto.class);
+            } catch (JMSException | IOException e) {
+                throw new RuntimeException(e.getMessage());
+            }
+        } else throw new RuntimeException("Something went wrong, please try again");
     }
 }

@@ -1,7 +1,7 @@
 package com.epam.epamgymdemo.service;
 
 import com.epam.epamgymdemo.converter.BoToDtoConverter;
-import com.epam.epamgymdemo.epamgymreporter.messaging.ReporterTrainingDtoProducer;
+import com.epam.epamgymdemo.epamgymreporter.messaging.ReporterTrainingProducer;
 import com.epam.epamgymdemo.metrics.CustomMetrics;
 import com.epam.epamgymdemo.model.bo.Trainee;
 import com.epam.epamgymdemo.model.bo.Trainer;
@@ -47,7 +47,7 @@ class TraineeServiceTest {
     private CustomMetrics customMetrics;
 
     @Mock
-    private ReporterTrainingDtoProducer reporterTrainingDtoProducer;
+    private ReporterTrainingProducer reporterTrainingProducer;
 
     @Mock
     private BoToDtoConverter boToDtoConverter;

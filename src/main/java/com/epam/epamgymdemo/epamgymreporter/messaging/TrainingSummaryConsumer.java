@@ -8,7 +8,7 @@
 
     @Component
     @RequiredArgsConstructor
-    public class TrainingSummaryDtoConsumer {
+    public class TrainingSummaryConsumer {
 
         private final TrainerService trainerService;
 

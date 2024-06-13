@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class TrainingSummaryDtoProducer {
+public class TrainingSummaryProducer {
 
     private static final String TRAINING_SUMMARY_QUEUE = "training.summary.queue";
 

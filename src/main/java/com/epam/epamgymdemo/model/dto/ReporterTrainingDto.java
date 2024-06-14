@@ -18,11 +18,9 @@ public class ReporterTrainingDto {
 
     private String lastName;
 
-    private Boolean active;
+    private Boolean status;
 
     private LocalDate trainingDate;
 
-    private Double trainingDuration;
-
-    private String actionType;
+    private Number trainingDuration;
 }

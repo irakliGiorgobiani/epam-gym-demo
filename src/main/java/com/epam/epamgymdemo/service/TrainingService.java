@@ -59,10 +59,9 @@ public class TrainingService {
                 .username(trainer.getUser().getUsername())
                 .firstName(trainer.getUser().getFirstName())
                 .lastName(trainer.getUser().getLastName())
-                .active(trainer.getUser().getIsActive())
+                .status(trainer.getUser().getIsActive())
                 .trainingDate(training.getTrainingDate())
-                .trainingDuration(training.getTrainingDuration().doubleValue())
-                .actionType("ADD")
+                .trainingDuration(training.getTrainingDuration())
                 .build());
     }
 

@@ -110,7 +110,7 @@ public class TraineeService {
                     .username(training.getTrainer().getUser().getUsername())
                     .firstName(training.getTrainer().getUser().getFirstName())
                     .lastName(training.getTrainer().getUser().getLastName())
-                    .status(training.getTrainer().getUser().getIsActive())
+                    .isActive(training.getTrainer().getUser().getIsActive())
                     .trainingDate(training.getTrainingDate())
                     .trainingDuration(-training.getTrainingDuration().doubleValue())
                     .build());

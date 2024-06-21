@@ -18,7 +18,7 @@ public class ReporterTrainingDto {
 
     private String lastName;
 
-    private Boolean status;
+    private Boolean isActive;
 
     private LocalDate trainingDate;
 

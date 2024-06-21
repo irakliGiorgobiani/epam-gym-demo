@@ -108,7 +108,7 @@ class TraineeServiceTest {
     void testGet() {
         String username = "username";
 
-        HashSet<TrainerDto> trainers = new HashSet<>();
+        Set<TrainerDto> trainers = new HashSet<>();
 
         Trainee trainee = Trainee.builder()
                 .birthday(LocalDate.now())

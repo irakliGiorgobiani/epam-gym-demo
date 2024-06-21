@@ -1,6 +1,6 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.converter.BoToDtoConverter;
+import com.epam.epamgymdemo.converter.TrainerToTrainerWithListDtoConverter;
 import com.epam.epamgymdemo.epamgymreporter.messaging.TrainingSummaryConsumer;
 import com.epam.epamgymdemo.metrics.CustomMetrics;
 import com.epam.epamgymdemo.model.bo.Trainee;
@@ -53,7 +53,7 @@ class TrainerServiceTest {
     private CustomMetrics customMetrics;
 
     @Mock
-    private BoToDtoConverter boToDtoConverter;
+    private TrainerToTrainerWithListDtoConverter trainerToTrainerWithListDtoConverter;
 
     @Mock
     private TrainingSummaryConsumer trainingSummaryConsumer;
@@ -90,7 +90,7 @@ class TrainerServiceTest {
         user.setTrainer(trainer);
 
         when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
-        when(boToDtoConverter.trainerToTrainerWithListDto(trainer, new HashSet<>())).thenReturn(
+        when(trainerToTrainerWithListDtoConverter.convert(trainer, new HashSet<>())).thenReturn(
                 TrainerWithListDto.builder().specializationId(trainer.getTrainingType().getId()).build()
         );
 
@@ -117,7 +117,7 @@ class TrainerServiceTest {
                 .build();
         user.setTrainer(trainer);
         when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
-        when(boToDtoConverter.trainerToTrainerWithListDto(trainer, new HashSet<>())).thenReturn(
+        when(trainerToTrainerWithListDtoConverter.convert(trainer, new HashSet<>())).thenReturn(
                 TrainerWithListDto.builder().specializationId(trainer.getTrainingType().getId()).build()
         );
 

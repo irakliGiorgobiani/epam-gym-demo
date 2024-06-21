@@ -1,6 +1,8 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.converter.BoToDtoConverter;
+import com.epam.epamgymdemo.converter.TraineeToTraineeDtoConverter;
+import com.epam.epamgymdemo.converter.TrainerToTrainerDtoConverter;
+import com.epam.epamgymdemo.converter.TrainingToTraineeTrainingDtoConverter;
 import com.epam.epamgymdemo.epamgymreporter.messaging.ReporterTrainingProducer;
 import com.epam.epamgymdemo.metrics.CustomMetrics;
 import com.epam.epamgymdemo.model.bo.Trainee;
@@ -51,7 +53,13 @@ class TraineeServiceTest {
     private ReporterTrainingProducer reporterTrainingProducer;
 
     @Mock
-    private BoToDtoConverter boToDtoConverter;
+    private TraineeToTraineeDtoConverter traineeToTraineeDtoConverter;
+
+    @Mock
+    private TrainingToTraineeTrainingDtoConverter trainingToTraineeTrainingDtoConverter;
+
+    @Mock
+    private TrainerToTrainerDtoConverter trainerToTrainerDtoConverter;
 
     @InjectMocks
     private TraineeService traineeService;
@@ -121,7 +129,7 @@ class TraineeServiceTest {
         trainee.setUser(user);
 
         when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
-        when(boToDtoConverter.traineeToTraineeDto(trainee, trainers)).thenReturn(TraineeDto.builder().build());
+        when(traineeToTraineeDtoConverter.convert(trainee, trainers)).thenReturn(TraineeDto.builder().build());
 
         traineeService.get(username);
 
@@ -186,7 +194,7 @@ class TraineeServiceTest {
         when(trainingRepository.findTrainings(user.getUsername(),
                 LocalDate.of(2020, 1, 1),
                 null, null, null)).thenReturn(List.of(training));
-        when(boToDtoConverter.trainingToTraineeTrainingDto(training)).thenReturn(traineeTrainingDto);
+        when(trainingToTraineeTrainingDtoConverter.convert(training)).thenReturn(traineeTrainingDto);
 
         List<TraineeTrainingDto> trainingsByUsernameAndCriteria = traineeService
                 .getTrainingsByUsernameAndCriteria(user.getUsername(),
@@ -233,7 +241,7 @@ class TraineeServiceTest {
 
         when(userRepository.findByUsername(user.getUsername())).thenReturn(Optional.of(user));
         trainee.getTrainers().add(trainer1);
-        when(boToDtoConverter.trainerToTrainerDto(trainer1)).thenReturn(trainerDto);
+        when(trainerToTrainerDtoConverter.convert(trainer1)).thenReturn(trainerDto);
 
         Set<TrainerDto> trainersUnassignedToTrainee = traineeService.getUnassignedActiveTrainers(user.getUsername());
 

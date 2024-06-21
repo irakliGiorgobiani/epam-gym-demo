@@ -1,6 +1,8 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.converter.BoToDtoConverter;
+import com.epam.epamgymdemo.converter.TraineeToTraineeDtoConverter;
+import com.epam.epamgymdemo.converter.TrainerToTrainerDtoConverter;
+import com.epam.epamgymdemo.converter.TrainingToTraineeTrainingDtoConverter;
 import com.epam.epamgymdemo.exception.EntityNotFoundException;
 import com.epam.epamgymdemo.epamgymreporter.messaging.ReporterTrainingProducer;
 import com.epam.epamgymdemo.metrics.CustomMetrics;
@@ -42,7 +44,11 @@ public class TraineeService {
 
     private final ReporterTrainingProducer reporterTrainingProducer;
 
-    private final BoToDtoConverter boToDtoConverter;
+    private final TraineeToTraineeDtoConverter traineeToTraineeDtoConverter;
+
+    private final TrainingToTraineeTrainingDtoConverter trainingToTraineeTrainingDtoConverter;
+
+    private final TrainerToTrainerDtoConverter trainerToTrainerDtoConverter;
 
     @Transactional
     public void create(Long userId, TraineeDto traineeDto) {
@@ -76,13 +82,13 @@ public class TraineeService {
 
         log.info(String.format("Trainee with the id: %d successfully updated", trainee.getId()));
 
-        return boToDtoConverter.traineeToTraineeDto(trainee, this.getTrainerList(trainee.getUser().getUsername()));
+        return traineeToTraineeDtoConverter.convert(trainee, this.getTrainerList(trainee.getUser().getUsername()));
     }
 
     public TraineeDto get(String username) {
         Trainee trainee = this.getByUsername(username);
 
-        return boToDtoConverter.traineeToTraineeDto(trainee, this.getTrainerList(trainee.getUser().getUsername()));
+        return traineeToTraineeDtoConverter.convert(trainee, this.getTrainerList(trainee.getUser().getUsername()));
     }
 
     public Trainee getByUsername(String username) {
@@ -100,7 +106,7 @@ public class TraineeService {
     @Transactional
     public TraineeDto delete(String username) {
         Trainee trainee = this.getByUsername(username);
-        TraineeDto traineeDto = boToDtoConverter.traineeToTraineeDto(trainee,
+        TraineeDto traineeDto = traineeToTraineeDtoConverter.convert(trainee,
                 this.getTrainerList(trainee.getUser().getUsername()));
 
         trainingRepository.findTrainings(username, null,
@@ -138,7 +144,7 @@ public class TraineeService {
                 toDate, trainerName, trainingType);
 
         return trainings.stream()
-                .map(boToDtoConverter::trainingToTraineeTrainingDto)
+                .map(trainingToTraineeTrainingDtoConverter::convert)
                 .toList();
     }
 
@@ -150,7 +156,7 @@ public class TraineeService {
         Trainee trainee = this.getByUsername(username);
 
         return trainee.getTrainers().stream()
-                .map(boToDtoConverter::trainerToTrainerDto)
+                .map(trainerToTrainerDtoConverter::convert)
                 .collect(Collectors.toSet());
     }
 

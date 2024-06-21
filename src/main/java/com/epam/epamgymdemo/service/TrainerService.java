@@ -1,6 +1,6 @@
 package com.epam.epamgymdemo.service;
 
-import com.epam.epamgymdemo.converter.BoToDtoConverter;
+import com.epam.epamgymdemo.converter.TrainerToTrainerWithListDtoConverter;
 import com.epam.epamgymdemo.exception.EntityNotFoundException;
 import com.epam.epamgymdemo.metrics.CustomMetrics;
 import com.epam.epamgymdemo.model.bo.User;
@@ -45,7 +45,7 @@ public class TrainerService {
 
     private final CustomMetrics customMetrics;
 
-    private final BoToDtoConverter boToDtoConverter;
+    private final TrainerToTrainerWithListDtoConverter trainerToTrainerWithListDtoConverter;
 
     private final ObjectMapper objectMapper;
 
@@ -74,14 +74,14 @@ public class TrainerService {
 
         log.info(String.format("Trainer with the id: %d successfully updated", trainer.getId()));
 
-        return boToDtoConverter.trainerToTrainerWithListDto(trainer,
+        return trainerToTrainerWithListDtoConverter.convert(trainer,
                 this.getTraineeList(trainer.getUser().getUsername()));
     }
 
     public TrainerWithListDto get(String username) {
         Trainer trainer = this.getByUsername(username);
 
-        return boToDtoConverter.trainerToTrainerWithListDto(trainer,
+        return trainerToTrainerWithListDtoConverter.convert(trainer,
                 this.getTraineeList(trainer.getUser().getUsername()));
     }
 

@@ -110,10 +110,9 @@ public class TraineeService {
                     .username(training.getTrainer().getUser().getUsername())
                     .firstName(training.getTrainer().getUser().getFirstName())
                     .lastName(training.getTrainer().getUser().getLastName())
-                    .active(training.getTrainer().getUser().getIsActive())
+                    .isActive(training.getTrainer().getUser().getIsActive())
                     .trainingDate(training.getTrainingDate())
-                    .trainingDuration(training.getTrainingDuration().doubleValue())
-                    .actionType("DELETE")
+                    .trainingDuration(-training.getTrainingDuration().doubleValue())
                     .build());
 
             trainingRepository.deleteById(training.getId());

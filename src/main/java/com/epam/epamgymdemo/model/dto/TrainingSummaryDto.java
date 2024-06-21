@@ -19,8 +19,8 @@ public class TrainingSummaryDto {
 
     private String lastName;
 
-    private String status;
+    private Boolean status;
 
-    private Map<Integer, Map<Integer, Double>> yearlySummary;
+    private Map<Integer, Map<Integer, Number>> yearlySummary;
 }
 

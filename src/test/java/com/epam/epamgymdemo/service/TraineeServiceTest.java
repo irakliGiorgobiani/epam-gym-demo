@@ -28,6 +28,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -101,6 +102,30 @@ class TraineeServiceTest {
         traineeService.getAll();
 
         verify(traineeRepository).findAll();
+    }
+
+    @Test
+    void testGet() {
+        String username = "username";
+
+        Set<TrainerDto> trainers = new HashSet<>();
+
+        Trainee trainee = Trainee.builder()
+                .birthday(LocalDate.now())
+                .address("address")
+                .trainers(new HashSet<>())
+                .build();
+
+        User user = User.builder().username(username).trainee(trainee).build();
+
+        trainee.setUser(user);
+
+        when(userRepository.findByUsername("username")).thenReturn(Optional.of(user));
+        when(boToDtoConverter.traineeToTraineeDto(trainee, trainers)).thenReturn(TraineeDto.builder().build());
+
+        traineeService.get(username);
+
+        verify(userRepository, times(2)).findByUsername(username);
     }
 
     @Test

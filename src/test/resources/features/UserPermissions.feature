@@ -1,3 +1,4 @@
+@Permissions
 Feature: User Permission
 
   Scenario: Request with valid JWT token should be successful

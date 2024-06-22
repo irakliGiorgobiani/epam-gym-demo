@@ -1,4 +1,6 @@
+@Integration
 Feature: Integration between Gym and Reporter microservices
+
   Scenario: Send training data from Gym to Reporter and verify it's processed
     Given a training data with the username "john_doe"
     When the Gym microservice sends the data to the Reporter microservice

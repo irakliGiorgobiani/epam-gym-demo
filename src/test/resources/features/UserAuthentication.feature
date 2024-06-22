@@ -1,4 +1,6 @@
+@Authentication
 Feature: User Authentication
+
   Scenario: Correct Username And Password
     Given username "username" and password "password"
     When checking credentials

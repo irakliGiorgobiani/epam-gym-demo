@@ -8,11 +8,6 @@ import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
 @EntityScan(basePackages = "com.epam.epamgymdemo.model")
-@ComponentScan(basePackages = {"com.epam.epamgymdemo.aspect", "com.epam.epamgymdemo.config",
-"com.epam.epamgymdemo.controller", "com.epam.epamgymdemo.converter", "com.epam.epamgymdemo.epamgymreporter",
-"com.epam.epamgymdemo.error", "com.epam.epamgymdemo.exception", "com.epam.epamgymdemo.filter",
-"com.epam.epamgymdemo.generator", "com.epam.epamgymdemo.health", "com.epam.epamgymdemo.metrics",
-"com.epam.epamgymdemo.repository", "com.epam.epamgymdemo.service"})
 @Generated
 public class EpamGymDemoApplication {
 

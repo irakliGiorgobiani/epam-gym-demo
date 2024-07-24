@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: federer123
+      MYSQL_DATABASE: gym_demo
+      MYSQL_USER: root
+      MYSQL_PASSWORD: federer123
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+
+  activemq:
+    image: rmohr/activemq:latest
+    container_name: activemq
+    ports:
+      - "9000:61616" # For JMS
+      - "8161:8161"  # For Web Console
+    environment:
+      ACTIVEMQ_ADMIN_LOGIN: admin
+      ACTIVEMQ_ADMIN_PASSWORD: admin
+    volumes:
+      - activemq-data:/opt/activemq/data
+
+  epam-gym-demo:
+    image: epam-gym-demo
+    container_name: epam-gym-demo
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gym_demo
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: federer123
+      SPRING_JMS_BROKER_URL: tcp://activemq:9000
+    depends_on:
+      - mysql
+      - activemq
+
+  epam-gym-reporter:
+    image: epam-gym-reporter
+    container_name: epam-gym-reporter
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/gym_reporter
+      SPRING_JMS_BROKER_URL: tcp://activemq:9000
+    depends_on:
+      - mongodb
+      - activemq
+
+volumes:
+  mysql-data:
+  activemq-data:
